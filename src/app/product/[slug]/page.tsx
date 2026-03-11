@@ -7,7 +7,7 @@ import {
     ShoppingBag, Minus, Plus, PhoneCall, Sun, Sparkles,
     Coffee, Heart, CheckSquare, Facebook, Share2, ChevronRight
 } from "lucide-react";
-import ProductCarousel from "@/components/home/ProductCarousel"; // Assuming this exists
+import ProductCarousel from "../../../components/home/ProductCarousel"; // Assuming this exists
 
 export default function ProductDetails() {
     const [selectedSize, setSelectedSize] = useState("500g");

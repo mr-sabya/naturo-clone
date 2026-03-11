@@ -1,6 +1,6 @@
 // 1. REMOVED "use client" so that 'async' is allowed
 import React from "react";
-import ProductCard from "@/components/product/ProductCard";
+import ProductCard from "../../../components/product/ProductCard";
 import Link from "next/link";
 
 // Sample Data 

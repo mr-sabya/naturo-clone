@@ -3,7 +3,7 @@
 import React, { useState, useMemo, use } from "react";
 import { Filter, X, LayoutGrid, List, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import ProductCard from "@/components/product/ProductCard";
+import ProductCard from "../../components/product/ProductCard";
 
 // 1. MOCK DATA (In production, you would fetch this from your API)
 const ALL_PRODUCTS = [

@@ -1,8 +1,8 @@
-import AllProducts from "@/components/home/AllProducts";
-import BannerSlider from "@/components/home/BannerSlider";
-import CategorySlider from "@/components/home/CategorySlider";
-import ProductCarousel from "@/components/home/ProductCarousel";
-import WeCare from "@/components/home/WeCare";
+import AllProducts from "../components/home/AllProducts";
+import BannerSlider from "../components/home/BannerSlider";
+import CategorySlider from "../components/home/CategorySlider";
+import ProductCarousel from "../components/home/ProductCarousel";
+import WeCare from "../components/home/WeCare";
 
 const bestSellers = [
     {
