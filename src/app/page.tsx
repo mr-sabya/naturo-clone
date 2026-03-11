@@ -1,6 +1,8 @@
+import AllProducts from "@/components/home/AllProducts";
 import BannerSlider from "@/components/home/BannerSlider";
 import CategorySlider from "@/components/home/CategorySlider";
 import ProductCarousel from "@/components/home/ProductCarousel";
+import WeCare from "@/components/home/WeCare";
 
 const bestSellers = [
     {
@@ -16,7 +18,7 @@ const bestSellers = [
         name: "আম্বর আশহাব | Ambor Ashab",
         price: "2,250",
         originalPrice: "3,500",
-        image: "/images/products/product_1.webp",
+        image: "/images/products/product_2.webp",
         slug: "ambor-ashab"
     },
     {
@@ -24,7 +26,7 @@ const bestSellers = [
         name: "মিসওয়াক পাউডার | Miswak Powder",
         price: "550",
         originalPrice: "800",
-        image: "/images/products/product_1.webp",
+        image: "/images/products/product_3.webp",
         slug: "miswak-powder"
     },
     {
@@ -32,7 +34,7 @@ const bestSellers = [
         name: "মধুময় বাদাম | Honey Nut",
         price: "1,250",
         originalPrice: "1,700",
-        image: "/images/products/product_1.webp",
+        image: "/images/products/product_4.webp",
         slug: "honey-nut"
     },
     {
@@ -40,9 +42,29 @@ const bestSellers = [
         name: "পিংক সল্ট | Pink Salt",
         price: "550",
         originalPrice: "800",
-        image: "/images/products/product_1.webp",
+        image: "/images/products/product_5.webp",
         slug: "pink-salt"
     }
+];
+
+const allProductsData = [
+    {
+        id: 1,
+        name: "শুক্রপুষ্টি | Sukro Pusti",
+        price: "1,500",
+        originalPrice: "2,250",
+        image: "/images/products/product_5.webp",
+        slug: "sukro-pusti"
+    },
+    {
+        id: 2,
+        name: "হজম বুস্টার | Hojom Booster",
+        price: "680",
+        originalPrice: "850",
+        image: "/images/products/product_5.webp",
+        slug: "hojom-booster"
+    },
+    // ... add all 10 products here
 ];
 
 export default function Home() {
@@ -60,10 +82,15 @@ export default function Home() {
                 products={bestSellers}
                 viewAllLink="/category/wellness"
             />
-            {/* 2. Other Sections (Products, Categories, etc.) */}
-            <div className="container mx-auto py-10">
-                {/* Your Product Grid will go here */}
-            </div>
+
+            <AllProducts products={allProductsData} />
+
+            {/* Best Sellers Section */}
+            <ProductCarousel title="Recently Viewed" products={bestSellers} />
+
+            <WeCare />
+
+        
         </main>
     );
 }
