@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
 3:I[97367,["/naturo-clone/_next/static/chunks/ff1a16fafef87110.js","/naturo-clone/_next/static/chunks/d2be314c3ece3fbe.js"],"OutletBoundary"]
 4:"$Sreact.suspense"
-0:{"buildId":"8OCI_cfFmd-IjyRIGSFmK","rsc":["$","$1","c",{"children":["$L2",[["$","script","script-0",{"src":"/naturo-clone/_next/static/chunks/41f3d0baf71cc1a0.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"57PLQsx6DvZCLaVuG0CFj","rsc":["$","$1","c",{"children":["$L2",[["$","script","script-0",{"src":"/naturo-clone/_next/static/chunks/41f3d0baf71cc1a0.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"loading":null,"isPartial":false}
 5:null
 2:E{"digest":"NEXT_HTTP_ERROR_FALLBACK;404"}
