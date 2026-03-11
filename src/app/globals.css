@@ -3,6 +3,15 @@
 @tailwind utilities;
 
 body {
-  background-color: #f9f9f9; /* Matches NaturoBD background */
-  color: #333;
+    background-color: #f9f9f9;
+    /* Matches NaturoBD background */
+    color: #333;
+}
+
+.container {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 1280px !important;
+    padding-left: .5rem;
+    padding-right: .5rem;
 }

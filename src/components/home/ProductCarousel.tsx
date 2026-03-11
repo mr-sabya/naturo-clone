@@ -95,7 +95,7 @@ export default function ProductCarousel({ title, products, viewAllLink }: Produc
                             {products.map((product) => (
                                 <div
                                     key={product.id}
-                                    className="min-w-0 shrink-0 grow-0 pl-3 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
+                                    className="min-w-0 shrink-0 grow-0 pl-3 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/4"
                                 >
                                     <ProductCard
                                         name={product.name}
