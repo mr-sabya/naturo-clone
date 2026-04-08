@@ -45,7 +45,7 @@ const Header = () => {
                 </div>
 
                 {/* --- MAIN HEADER (Forest Green) --- */}
-                <div className="bg-[#002d17] text-white py-3 md:py-4 shadow-lg">
+                <div className="bg-[#002d17] text-white py-3 md:py-3 shadow-lg">
                     <div className="container mx-auto px-4 flex items-center justify-between gap-4 md:gap-6">
 
                         {/* Mobile Menu Toggle */}
@@ -55,16 +55,7 @@ const Header = () => {
 
                         {/* Logo Section */}
                         <Link href="/" className="flex items-center gap-2 min-w-fit">
-                            <div className="bg-white rounded-full p-1 w-9 h-9 md:w-11 md:h-11 flex items-center justify-center">
-                                <div className="w-5 h-7 md:w-6 md:h-8 bg-[#002d17] rounded-tl-full rounded-br-full rotate-45"></div>
-                            </div>
-                            <div className="leading-none">
-                                <div className="flex items-baseline">
-                                    <span className="text-xl md:text-2xl font-black tracking-tighter text-[#00AA4E]">NATURO</span>
-                                    <span className="text-[8px] md:text-[10px] font-bold ml-0.5">BD</span>
-                                </div>
-                                <p className="text-[7px] md:text-[9px] tracking-[0.2em] font-bold text-white uppercase opacity-70">Back to Nature</p>
-                            </div>
+                            <img src="/images/logo.png" alt="Naturo Logo" className="h-12 w-auto" />
                         </Link>
 
                         {/* Search Bar */}

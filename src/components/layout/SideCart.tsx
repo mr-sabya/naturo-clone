@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "../product/ProductCard"; // Reuse your existing card
+import Link from "next/link";
 
 interface SideCartProps {
     isOpen: boolean;
@@ -134,9 +135,15 @@ export default function SideCart({ isOpen, onClose }: SideCartProps) {
                                 <span className="text-lg font-bold">Total</span>
                                 <span className="text-lg font-bold">৳{total.toLocaleString()}</span>
                             </div>
-                            <button className="w-full bg-[#9ACD32] hover:bg-[#8bbd2d] text-white py-4 rounded font-bold text-lg transition-colors">
+                            <Link
+                                href="/checkout"
+            //                     {/* Calling onClose here updates the state in the parent, 
+            // triggering the slide-out animation before the page changes */}
+                                onClick={onClose}
+                                className="block w-full text-center bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-lg shadow-emerald-900/10 hover:shadow-emerald-900/20 active:scale-[0.98]"
+                            >
                                 অর্ডার করুন
-                            </button>
+                            </Link>
                         </div>
                     </motion.div>
                 </>

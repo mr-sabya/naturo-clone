@@ -55,6 +55,7 @@ export default function CategorySlider() {
                                                 src={cat.icon}
                                                 alt={cat.name}
                                                 fill
+                                                sizes="(max-width: 768px) 44px, 60px"
                                                 className="object-contain p-0.5"
                                                 onError={(e) => {
                                                     e.currentTarget.src = "https://via.placeholder.com/40";

@@ -4,6 +4,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { Phone, Mail, MapPin, Facebook, MessageCircle } from "lucide-react";
 
+
+const footerLinks = [
+    { name: "About Us", slug: "/about-us" },
+    { name: "Privacy Policy", slug: "/privacy-policy" },
+    { name: "Terms & Conditions", slug: "/terms-and-conditions" },
+    { name: "Return & Refund", slug: "/return-refund-policy" },
+    { name: "Cookie Policy", slug: "/cookie-policy" },
+    { name: "Sitemap", slug: "/sitemap" },
+];
+
+const footerLinksSecondRow = [
+    { name: "Order Tracking", slug: "/order-tracking" },
+    { name: "Contact Us", slug: "/contact-us" },
+    { name: "How to Order", slug: "/how-to-order" },
+    { name: "Product Returns", slug: "/product-returns" },
+    { name: "FAQ", slug: "/faq" },
+];
+
+
 export default function Footer() {
     return (
         /* Using the Deep Forest Green background to match the header */
@@ -18,7 +37,7 @@ export default function Footer() {
                         <Link href="/" className="inline-block">
                             <div className="flex items-center gap-2">
                                 <div className="bg-white rounded-full p-1 w-10 h-10 flex items-center justify-center">
-                                     <div className="w-5 h-7 bg-[#002d17] rounded-tl-full rounded-br-full rotate-45"></div>
+                                    <div className="w-5 h-7 bg-[#002d17] rounded-tl-full rounded-br-full rotate-45"></div>
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-black tracking-tighter text-[#00AA4E]">NATURO<span className="text-white">BD</span></h2>
@@ -71,10 +90,13 @@ export default function Footer() {
                             <span className="absolute bottom-0 left-0 w-1/2 h-1 bg-[#00AA4E]"></span>
                         </h2>
                         <ul className="space-y-3">
-                            {["About Us", "Privacy Policy", "Terms & Conditions", "Return & Refund", "Cookie Policy", "Sitemap"].map((link) => (
-                                <li key={link}>
-                                    <Link href="#" className="text-sm text-white/60 hover:text-[#00AA4E] hover:translate-x-1 transition-all inline-block">
-                                        {link}
+                            {footerLinks.map((link) => (
+                                <li key={link.name}>
+                                    <Link
+                                        href={link.slug}
+                                        className="text-sm text-white/60 hover:text-[#00AA4E] hover:translate-x-1 transition-all inline-block"
+                                    >
+                                        {link.name}
                                     </Link>
                                 </li>
                             ))}
@@ -88,10 +110,10 @@ export default function Footer() {
                             <span className="absolute bottom-0 left-0 w-1/2 h-1 bg-[#00AA4E]"></span>
                         </h2>
                         <ul className="space-y-3">
-                            {["Order Tracking", "Contact Us", "How to Order", "Product Returns", "FAQ"].map((link) => (
-                                <li key={link}>
-                                    <Link href="#" className="text-sm text-white/60 hover:text-[#00AA4E] hover:translate-x-1 transition-all inline-block">
-                                        {link}
+                            {footerLinksSecondRow.map((link) => (
+                                <li key={link.name}>
+                                    <Link href={link.slug} className="text-sm text-white/60 hover:text-[#00AA4E] hover:translate-x-1 transition-all inline-block">
+                                        {link.name}
                                     </Link>
                                 </li>
                             ))}
@@ -115,7 +137,7 @@ export default function Footer() {
                                 <MessageCircle size={20} />
                             </a>
                         </div>
-                        
+
                         {/* Payment Methods Placeholder */}
                         <div className="mt-8 pt-8 border-t border-white/5">
                             <p className="text-[10px] uppercase font-bold tracking-widest text-white/30 mb-3">Secure Payments</p>
