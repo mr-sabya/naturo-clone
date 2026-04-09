@@ -11,7 +11,7 @@ module.exports = {
             colors: {
                 naturoGreen: "#00AA4E",      // Main Green
                 naturoLight: "#F3FBF6",      // Light background
-                naturoOrange: "#FF9900",     // Discount badges
+                naturoOrange: "#EE7123",     // Discount badges
                 naturoGray: "#777777",       // Text color
             },
             container: {
@@ -19,7 +19,9 @@ module.exports = {
                 padding: "1rem",
             },
             animation: {
-                'bounce-slow': 'bounce-slow 3s infinite',
+                'morph': 'morph 8s ease-in-out infinite',
+                'bounce-slow': 'bounce 5s ease-in-out infinite',
+                'fadeInUp': 'fadeInUp 0.8s ease-out forwards',
             },
             keyframes: {
                 'bounce-slow': {
@@ -32,6 +34,15 @@ module.exports = {
                         animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)',
                     },
                 },
+                'fadeInUp': {
+                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+
+                'morph': {
+                    '0%, 100%': { borderRadius: '40% 60% 70% 30% / 40% 50% 60% 50%' },
+                    '50%': { borderRadius: '70% 30% 40% 60% / 50% 60% 40% 50%' },
+                }
             },
 
         },

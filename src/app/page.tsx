@@ -8,16 +8,16 @@ const bestSellers = [
     {
         id: 1,
         name: "সরিষা মধু | Mustard Honey",
-        price: "1,050",
-        originalPrice: "1,300",
+        price: "1050",
+        originalPrice: "1300",
         image: "/images/products/product_1.webp",
         slug: "mustard-honey-box"
     },
     {
         id: 2,
         name: "আম্বর আশহাব | Ambor Ashab",
-        price: "2,250",
-        originalPrice: "3,500",
+        price: "2250",
+        originalPrice: "3500",
         image: "/images/products/product_2.webp",
         slug: "ambor-ashab"
     },
@@ -32,8 +32,8 @@ const bestSellers = [
     {
         id: 4,
         name: "মধুময় বাদাম | Honey Nut",
-        price: "1,250",
-        originalPrice: "1,700",
+        price: "1250",
+        originalPrice: "1700",
         image: "/images/products/product_4.webp",
         slug: "honey-nut"
     },
@@ -51,8 +51,8 @@ const allProductsData = [
     {
         id: 1,
         name: "শুক্রপুষ্টি | Sukro Pusti",
-        price: "1,500",
-        originalPrice: "2,250",
+        price: "1500",
+        originalPrice: "2250",
         image: "/images/products/product_5.webp",
         slug: "sukro-pusti"
     },

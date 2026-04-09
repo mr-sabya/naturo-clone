@@ -90,7 +90,7 @@ export default function ProductCarousel({ title, products, viewAllLink }: Produc
                     </div>
 
                     {/* --- Carousel Body --- */}
-                    <div className="overflow-hidden px-1" ref={emblaRef}>
+                    <div className="overflow-hidden py-5" ref={emblaRef}>
                         <div className="flex -ml-3 md:-ml-4 items-stretch">
                             {products.map((product) => (
                                 <div

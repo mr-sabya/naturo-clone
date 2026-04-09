@@ -27,7 +27,7 @@ const reviews = [
         image: "/images/reviews/review-1.jpg"
     },
     {
-        id: 3,
+        id: 4,
         message: "আমার আমার চার মাস যাবত চুল পড়ছিলো। এখন প্রকৃতিজের কোল্ড প্রেস নারকেল তেল ব্যবহার করে ৬ মাস যাবত ভালো আছে। ধন্যবাদ প্রকৃতিজ কে ❤️❤️",
         rating: 5,
         image: "/images/reviews/review-1.jpg"
