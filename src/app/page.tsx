@@ -3,94 +3,69 @@ import BannerSlider from "../components/home/BannerSlider";
 import CategorySlider from "../components/home/CategorySlider";
 import ProductCarousel from "../components/home/ProductCarousel";
 import WeCare from "../components/home/WeCare";
+import { parsePrice, parseOriginalPrice } from "@/lib/api";
+import type { Product, PaginatedProducts } from "@/types";
 
-const bestSellers = [
-    {
-        id: 1,
-        name: "সরিষা মধু | Mustard Honey",
-        price: "1050",
-        originalPrice: "1300",
-        image: "/images/products/product_1.webp",
-        slug: "mustard-honey-box"
-    },
-    {
-        id: 2,
-        name: "আম্বর আশহাব | Ambor Ashab",
-        price: "2250",
-        originalPrice: "3500",
-        image: "/images/products/product_2.webp",
-        slug: "ambor-ashab"
-    },
-    {
-        id: 3,
-        name: "মিসওয়াক পাউডার | Miswak Powder",
-        price: "550",
-        originalPrice: "800",
-        image: "/images/products/product_3.webp",
-        slug: "miswak-powder"
-    },
-    {
-        id: 4,
-        name: "মধুময় বাদাম | Honey Nut",
-        price: "1250",
-        originalPrice: "1700",
-        image: "/images/products/product_4.webp",
-        slug: "honey-nut"
-    },
-    {
-        id: 5,
-        name: "পিংক সল্ট | Pink Salt",
-        price: "550",
-        originalPrice: "800",
-        image: "/images/products/product_5.webp",
-        slug: "pink-salt"
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
+const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
+
+const headers = {
+    Accept: "application/json",
+    "X-Tenant-Id": TENANT_ID,
+};
+
+function normalizeProduct(p: Product) {
+    const rawPrice = p.effective_price ?? p.sale_price ?? p.price;
+    const rawOriginal = p.base_price ?? p.regular_price ?? p.original_price;
+    return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        price: parsePrice(rawPrice),
+        originalPrice: parseOriginalPrice(rawOriginal, rawPrice),
+        image: p.main_image || p.image || "",
+        category: p.category_name ?? p.category,
+        isOutOfStock: p.stock === 0,
+    };
+}
+
+async function fetchProducts(page = 1): Promise<{ products: Product[]; lastPage: number }> {
+    try {
+        const res = await fetch(`${API_BASE}/products?page=${page}`, {
+            headers,
+            cache: "no-store",
+        });
+        if (!res.ok) return { products: [], lastPage: 1 };
+        const data: PaginatedProducts | Product[] = await res.json();
+        if (Array.isArray(data)) return { products: data, lastPage: 1 };
+        return { products: data.data, lastPage: data.last_page };
+    } catch {
+        return { products: [], lastPage: 1 };
     }
-];
+}
 
-const allProductsData = [
-    {
-        id: 1,
-        name: "শুক্রপুষ্টি | Sukro Pusti",
-        price: "1500",
-        originalPrice: "2250",
-        image: "/images/products/product_5.webp",
-        slug: "sukro-pusti"
-    },
-    {
-        id: 2,
-        name: "হজম বুস্টার | Hojom Booster",
-        price: "680",
-        originalPrice: "850",
-        image: "/images/products/product_5.webp",
-        slug: "hojom-booster"
-    },
-    // ... add all 10 products here
-];
+export default async function Home() {
+    const { products, lastPage } = await fetchProducts(1);
 
-export default function Home() {
+    const bestSellers = products.slice(0, 8).map(normalizeProduct);
+    const wellnessProducts = products.slice(0, 6).map(normalizeProduct);
+
     return (
         <main>
-            {/* 1. The Banner Slider */}
             <BannerSlider />
             <CategorySlider />
-            {/* Best Sellers Section */}
+
             <ProductCarousel title="OUR BEST SELLERS" products={bestSellers} />
 
-            {/* You can reuse the same component for other sections like "New Arrivals" */}
             <ProductCarousel
                 title="Wellness"
-                products={bestSellers}
+                products={wellnessProducts}
                 viewAllLink="/category/wellness"
             />
 
-            <AllProducts products={allProductsData} />
-
-            {/* Best Sellers Section */}
-            <ProductCarousel title="Recently Viewed" products={bestSellers} />
+            <AllProducts initialProducts={products.map(normalizeProduct)} initialLastPage={lastPage} />
 
             <WeCare />
-
-        
         </main>
     );
 }

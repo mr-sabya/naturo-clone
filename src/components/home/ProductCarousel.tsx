@@ -13,6 +13,7 @@ interface Product {
     originalPrice?: string | number;
     image: string;
     slug: string;
+    category?: string;
 }
 
 interface ProductCarouselProps {
@@ -98,11 +99,13 @@ export default function ProductCarousel({ title, products, viewAllLink }: Produc
                                     className="min-w-0 shrink-0 grow-0 pl-3 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/4"
                                 >
                                     <ProductCard
+                                        id={typeof product.id === "number" ? product.id : Number(product.id)}
                                         name={product.name}
                                         price={product.price}
                                         originalPrice={product.originalPrice}
                                         image={product.image}
                                         slug={product.slug}
+                                        category={product.category}
                                     />
                                 </div>
                             ))}
