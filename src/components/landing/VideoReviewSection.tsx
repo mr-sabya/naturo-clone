@@ -1,37 +1,21 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
+import type { VideoReview } from "@/types";
 
-interface VideoReview {
-    id: number;
-    title?: string;
-    youtube_id?: string;
-    youtubeId?: string;
-    video_url?: string;
-    thumbnail?: string;
+interface VideoReviewSectionProps {
+    videos: VideoReview[];
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
-const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
+export default function VideoReviewSection({ videos }: VideoReviewSectionProps) {
+    // video_url is a raw YouTube watch URL — extract the ID for the embed src
+    const getYouTubeId = (url: string) => {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    };
 
-export default function VideoReviewSection() {
-    const [videos, setVideos] = useState<VideoReview[]>([]);
-    const [loaded, setLoaded] = useState(false);
-
-    useEffect(() => {
-        fetch(`${API_BASE}/video-reviews`, {
-            headers: { Accept: "application/json", "X-Tenant-Id": TENANT_ID },
-        })
-            .then((r) => r.json())
-            .then((data) => {
-                const list: VideoReview[] = Array.isArray(data) ? data : data.data ?? [];
-                setVideos(list);
-            })
-            .catch(() => {})
-            .finally(() => setLoaded(true));
-    }, []);
-
-    if (!loaded || videos.length === 0) return null;
+    if (!videos || videos.length === 0) return null;
 
     return (
         <section className="py-16 md:py-24 bg-white px-4">
@@ -45,22 +29,27 @@ export default function VideoReviewSection() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {videos.map((video) => {
-                        const ytId = video.youtube_id ?? video.youtubeId ?? "";
-                        const embedUrl = video.video_url ?? (ytId ? `https://www.youtube.com/embed/${ytId}?modestbranding=1&rel=0` : "");
-                        if (!embedUrl) return null;
+                        const youtubeId = getYouTubeId(video.video_url);
+
                         return (
                             <div
                                 key={video.id}
                                 className="group relative bg-black rounded-[2rem] overflow-hidden shadow-xl shadow-emerald-900/10 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 border-4 border-white"
                             >
                                 <div className="relative aspect-video">
-                                    <iframe
-                                        className="w-full h-full"
-                                        src={embedUrl}
-                                        title={video.title ?? "Customer Review"}
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                    />
+                                    {youtubeId ? (
+                                        <iframe
+                                            className="w-full h-full"
+                                            src={`https://www.youtube.com/embed/${youtubeId}?modestbranding=1&rel=0`}
+                                            title={video.title}
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
+                                            Invalid Video URL
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="absolute top-4 left-4 flex items-center gap-2 pointer-events-none">

@@ -6,8 +6,12 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay"; // 1. Import Autoplay
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+interface GalleryImage {
+    url: string;
+}
+
 interface ImageGalleryProps {
-    images: string[];
+    images: GalleryImage[];
 }
 
 export default function ImageGallerySection({ images }: ImageGalleryProps) {
@@ -45,6 +49,8 @@ export default function ImageGallerySection({ images }: ImageGalleryProps) {
         emblaApi.on("reInit", onSelect);
     }, [emblaApi, onSelect]);
 
+    if (!images || images.length === 0) return null;
+
     return (
         <section className="py-16 bg-white px-4">
             <div className="max-w-6xl mx-auto relative group">
@@ -63,9 +69,10 @@ export default function ImageGallerySection({ images }: ImageGalleryProps) {
                                 <div className="rounded-2xl overflow-hidden border-[3px] border-[#ff8a00] shadow-xl hover:shadow-2xl transition-all duration-500 group relative">
                                     <div className="relative aspect-square">
                                         <Image
-                                            src={img}
+                                            src={img.url}
                                             alt={`Gallery Image ${i + 1}`}
                                             fill
+                                            unoptimized
                                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                             className="object-cover group-hover:scale-110 transition-transform duration-700"
                                         />
