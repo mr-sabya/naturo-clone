@@ -14,13 +14,21 @@ import {
 import SideCart from './SideCart';
 import { useCartStore } from '@/store/cartStore';
 
-const Header = () => {
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const totalItems = useCartStore((s) => s.totalItems);
-    const totalPrice = useCartStore((s) => s.totalPrice);
+interface HeaderProps {
+    logoUrl?: string;
+    siteName?: string;
+}
 
-    const itemCount = totalItems();
-    const cartTotal = totalPrice();
+const Header = ({ logoUrl, siteName = "Naturo" }: HeaderProps) => {
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const hasHydrated = useCartStore((s) => s.hasHydrated);
+    const count = useCartStore((s) => s.count);
+    const subtotal = useCartStore((s) => s.subtotal);
+
+    // Before the persisted cart has rehydrated on the client, render as empty —
+    // must match the server-rendered HTML exactly to avoid a hydration mismatch.
+    const itemCount = hasHydrated ? count : 0;
+    const cartTotal = hasHydrated ? subtotal : 0;
 
     return (
         <>
@@ -54,7 +62,7 @@ const Header = () => {
                         </button>
 
                         <Link href="/" className="flex items-center gap-2 min-w-fit">
-                            <img src="/images/logo.png" alt="Naturo Logo" className="h-12 w-auto" />
+                            <img src={logoUrl || "/images/logo.png"} alt={`${siteName} Logo`} className="h-12 w-auto" />
                         </Link>
 
                         <div className="hidden md:flex flex-1 max-w-xl relative mx-4">

@@ -8,7 +8,7 @@ const footerLinks = [
     { name: "About Us", slug: "/about-us" },
     { name: "Privacy Policy", slug: "/privacy-policy" },
     { name: "Terms & Conditions", slug: "/terms-and-conditions" },
-    { name: "Return & Refund", slug: "/return-refund-policy" },
+    { name: "Return & Refund", slug: "/return-and-refund" },
 ];
 
 const customerService = [
@@ -18,7 +18,12 @@ const customerService = [
     { name: "FAQ", slug: "/faq" },
 ];
 
-export default function Footer() {
+interface FooterProps {
+    logoUrl?: string;
+    siteName?: string;
+}
+
+export default function Footer({ logoUrl, siteName = "Naturo" }: FooterProps) {
     return (
         <footer className="relative bg-[#0a1a12] text-white pt-20 overflow-hidden">
 
@@ -30,7 +35,7 @@ export default function Footer() {
                     <div className="md:col-span-5 space-y-8">
                         <Link href="/" className="inline-block">
                             <div className="flex items-center gap-3">
-                                <img src="/images/logo.png" alt="Naturo Logo" className="h-12 w-auto" />
+                                <img src={logoUrl || "/images/logo.png"} alt={`${siteName} Logo`} className="h-12 w-auto" />
                             </div>
                         </Link>
                         <p className="text-white/60 leading-relaxed text-lg max-w-md">

@@ -9,9 +9,12 @@ module.exports = {
     theme: {
         extend: {
             colors: {
-                naturoGreen: "#00AA4E",      // Main Green
-                naturoLight: "#F3FBF6",      // Light background
-                naturoOrange: "#EE7123",     // Discount badges
+                // Read from CSS vars set in globals.css, overridden at runtime by the
+                // Settings API (src/lib/settings.ts) — falls back to the literal default
+                // when no admin override is configured.
+                naturoGreen: "var(--brand-primary, #00AA4E)",   // Main Green
+                naturoLight: "var(--brand-primary-light, #F3FBF6)", // Light background
+                naturoOrange: "var(--brand-accent, #EE7123)",   // Discount badges
                 naturoGray: "#777777",       // Text color
             },
             container: {

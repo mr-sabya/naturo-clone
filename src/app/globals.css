@@ -2,10 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Brand/UI source variables, overridden at runtime by the Settings API
+ * (see src/lib/settings.ts + src/app/layout.tsx: getSettings + buildThemeCss).
+ * tailwind.config.js reads naturoGreen/naturoOrange from --brand-primary/--brand-accent,
+ * so an admin-configured color takes effect everywhere those tokens are used.
+ */
+:root {
+    --brand-primary: #00AA4E;
+    --brand-primary-dark: #007a38;
+    --brand-primary-light: #F3FBF6;
+    --brand-secondary: #2D2D2D;
+    --brand-accent: #EE7123;
+    --ui-header-bg: #002d17;
+    --ui-header-text: #ffffff;
+    --ui-menu-bg: #cde7d8;
+    --ui-menu-text: #002d17;
+    --ui-footer-bg: #0a1a12;
+    --ui-footer-text: #ffffff;
+    --ui-body-text: #333333;
+    --ui-background: #f9f9f9;
+}
+
 body {
-    background-color: #f9f9f9;
+    background-color: var(--ui-background, #f9f9f9);
     /* Matches NaturoBD background */
-    color: #333;
+    color: var(--ui-body-text, #333);
 }
 
 .container {

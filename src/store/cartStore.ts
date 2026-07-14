@@ -6,6 +6,14 @@ interface CartState {
     items: CartItem[];
     count: number;
     subtotal: number;
+    // True once the persisted localStorage cart has been rehydrated on the client.
+    // Hydration is skipped on store creation (see `skipHydration` below) and driven
+    // manually by <CartHydrator /> in layout.tsx, so the server-rendered HTML and the
+    // client's first render both start from the same empty state — consumers that
+    // render cart-count-dependent UI (e.g. Header's badge) should gate on this to
+    // avoid a hydration mismatch.
+    hasHydrated: boolean;
+    setHasHydrated: (v: boolean) => void;
     addItem: (item: Omit<CartItem, "quantity">) => void;
     removeItem: (id: number, variantId?: number) => void;
     updateQuantity: (id: number, quantity: number, variantId?: number) => void;
@@ -30,6 +38,8 @@ export const useCartStore = create<CartState>()(
             items: [],
             count: 0,
             subtotal: 0,
+            hasHydrated: false,
+            setHasHydrated: (v) => set({ hasHydrated: v }),
 
             addItem: (newItem) => {
                 set((state) => {
@@ -77,6 +87,15 @@ export const useCartStore = create<CartState>()(
             totalItems: () => get().count,
             totalPrice: () => get().subtotal,
         }),
-        { name: "naturo-cart" }
+        {
+            name: "naturo-cart",
+            // Don't auto-rehydrate on store creation (that happens before React's first
+            // client render and is what causes the SSR/client mismatch) — <CartHydrator />
+            // triggers it explicitly from a useEffect instead.
+            skipHydration: true,
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true);
+            },
+        }
     )
 );
