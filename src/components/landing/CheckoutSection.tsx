@@ -4,10 +4,10 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
     Minus, Plus, ShoppingBag, ShieldCheck,
-    PhoneCall, CheckCircle2, Truck, Info, ChevronDown
+    PhoneCall, CheckCircle2, Truck, Info, MapPin, Loader2
 } from "lucide-react";
 import { parsePrice, parseOriginalPrice } from "@/lib/api";
-import type { Product, Division, District, City, OrderPayload } from "@/types";
+import type { Product, OrderPayload } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
@@ -19,7 +19,7 @@ interface CheckoutSectionProps {
 
 export default function CheckoutSection({ product }: CheckoutSectionProps) {
     const FALLBACK_IMAGES = ["/images/products/product_1.webp", "/images/products/product_2.webp", "/images/products/product_3.webp"];
-    const galleryRaw = product?.gallery?.filter(Boolean) ?? product?.images?.filter(Boolean) ?? [];
+    const galleryRaw = product?.gallery?.map((g) => g.url).filter(Boolean) ?? product?.images?.filter(Boolean) ?? [];
     const rawImages: string[] = galleryRaw.length > 0
         ? galleryRaw
         : product?.main_image
@@ -51,50 +51,39 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [address, setAddress] = useState("");
-    const [note, setNote] = useState("");
-    const [deliveryCharge, setDeliveryCharge] = useState(0);
-
-    // Location state
-    const [divisions, setDivisions] = useState<Division[]>([]);
-    const [districts, setDistricts] = useState<District[]>([]);
-    const [cities, setCities] = useState<City[]>([]);
-    const [divisionId, setDivisionId] = useState<number | null>(null);
-    const [districtId, setDistrictId] = useState<number | null>(null);
-    const [cityId, setCityId] = useState<number | null>(null);
+    const [deliveryCharge, setDeliveryCharge] = useState(60);
 
     // Order submission state
     const [submitting, setSubmitting] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [orderError, setOrderError] = useState("");
 
+    // Geolocation (best-effort fraud/delivery signal — same as govaly-clone's CheckoutSection)
+    const [location, setLocation] = useState<{ lat: number | null; lon: number | null }>({ lat: null, lon: null });
+    const [locationStatus, setLocationStatus] = useState<"idle" | "detecting" | "found" | "denied">("idle");
+    useEffect(() => {
+        if ("geolocation" in navigator) {
+            setLocationStatus("detecting");
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+                    setLocationStatus("found");
+                },
+                () => setLocationStatus("denied")
+            );
+        }
+    }, []);
+
     const subtotal = effectivePrice * quantity;
     const total = subtotal + deliveryCharge;
 
-    // Fetch divisions on mount
-    useEffect(() => {
-        fetch(`${API_BASE}/divisions`, { headers: HEADERS })
-            .then((r) => r.json())
-            .then((data) => setDivisions(Array.isArray(data) ? data : data.data ?? []))
-            .catch(() => {});
-    }, []);
-
-    // Fetch districts when division changes
-    useEffect(() => {
-        if (!divisionId) { setDistricts([]); setDistrictId(null); setCities([]); setCityId(null); return; }
-        fetch(`${API_BASE}/districts?division_id=${divisionId}`, { headers: HEADERS })
-            .then((r) => r.json())
-            .then((data) => { setDistricts(Array.isArray(data) ? data : data.data ?? []); setDistrictId(null); setCities([]); setCityId(null); })
-            .catch(() => {});
-    }, [divisionId]);
-
-    // Fetch cities when district changes
-    useEffect(() => {
-        if (!districtId) { setCities([]); setCityId(null); return; }
-        fetch(`${API_BASE}/cities?district_id=${districtId}`, { headers: HEADERS })
-            .then((r) => r.json())
-            .then((data) => { setCities(Array.isArray(data) ? data : data.data ?? []); setCityId(null); })
-            .catch(() => {});
-    }, [districtId]);
+    // division_name/district_name/city_name are derived from the delivery-area radio
+    // below (no separate location dropdowns, same as govaly-clone's CheckoutSection).
+    const derivedLocation = {
+        division: deliveryCharge === 60 ? "Dhaka" : "Outside Dhaka",
+        district: deliveryCharge === 60 ? "Dhaka City" : "Outside District",
+        city: deliveryCharge === 60 ? "Dhaka" : "Outside City",
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -104,22 +93,24 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
         }
         setSubmitting(true);
         setOrderError("");
+        // Flat, single-item payload matching OrderController::store's validation rules on the
+        // backend exactly: location *names* (not ids), `delivery_fee` (not `delivery_charge`),
+        // no `items[]` wrapper — the backend only ever reads one product per call.
+        // division_name/district_name/city_name are derived from the delivery-area radio,
+        // same as govaly-clone's CheckoutSection (no separate location dropdowns).
         const payload: OrderPayload = {
             name: name.trim(),
             phone: phone.trim(),
             address: address.trim(),
-            division_id: divisionId,
-            district_id: districtId,
-            city_id: cityId,
-            delivery_charge: deliveryCharge,
-            note: note.trim() || undefined,
-            items: [
-                {
-                    product_id: Number(product?.id ?? 0),
-                    quantity,
-                    variant_id: selectedVariantId ?? undefined,
-                },
-            ],
+            product_id: Number(product?.id ?? 0),
+            variant_id: selectedVariantId ?? null,
+            quantity,
+            delivery_fee: deliveryCharge,
+            division_name: derivedLocation.division,
+            district_name: derivedLocation.district,
+            city_name: derivedLocation.city,
+            latitude: location.lat,
+            longitude: location.lon,
         };
         try {
             const res = await fetch(`${API_BASE}/orders/checkout`, {
@@ -180,6 +171,25 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
+                                    {locationStatus === "detecting" && (
+                                        <div className="flex items-center gap-2 text-xs font-medium text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5">
+                                            <Loader2 size={14} className="animate-spin shrink-0" />
+                                            লোকেশন শনাক্ত করা হচ্ছে...
+                                        </div>
+                                    )}
+                                    {locationStatus === "found" && location.lat !== null && location.lon !== null && (
+                                        <div className="flex flex-col gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2.5">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin size={14} className="shrink-0" />
+                                                লোকেশন শনাক্ত করা হয়েছে ({location.lat.toFixed(4)}, {location.lon.toFixed(4)})
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-emerald-600 font-semibold pl-[22px]">
+                                                <span>বিভাগ: {derivedLocation.division}</span>
+                                                <span>জেলা: {derivedLocation.district}</span>
+                                                <span>শহর: {derivedLocation.city}</span>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 ml-1">আপনার নাম *</label>
@@ -215,65 +225,6 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                         </div>
                                     </div>
 
-                                    {/* Location Dropdowns */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {/* Division */}
-                                        <div className="space-y-2 relative">
-                                            <label className="text-sm font-bold text-gray-700 ml-1">বিভাগ</label>
-                                            <div className="relative">
-                                                <select
-                                                    value={divisionId ?? ""}
-                                                    onChange={(e) => setDivisionId(e.target.value ? Number(e.target.value) : null)}
-                                                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 appearance-none cursor-pointer"
-                                                >
-                                                    <option value="">বিভাগ বেছে নিন</option>
-                                                    {divisions.map((d) => (
-                                                        <option key={d.id} value={d.id}>{d.name}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                                            </div>
-                                        </div>
-
-                                        {/* District */}
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-gray-700 ml-1">জেলা</label>
-                                            <div className="relative">
-                                                <select
-                                                    value={districtId ?? ""}
-                                                    onChange={(e) => setDistrictId(e.target.value ? Number(e.target.value) : null)}
-                                                    disabled={!divisionId || districts.length === 0}
-                                                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 appearance-none cursor-pointer disabled:opacity-50"
-                                                >
-                                                    <option value="">জেলা বেছে নিন</option>
-                                                    {districts.map((d) => (
-                                                        <option key={d.id} value={d.id}>{d.name}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                                            </div>
-                                        </div>
-
-                                        {/* City */}
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-gray-700 ml-1">শহর / উপজেলা</label>
-                                            <div className="relative">
-                                                <select
-                                                    value={cityId ?? ""}
-                                                    onChange={(e) => setCityId(e.target.value ? Number(e.target.value) : null)}
-                                                    disabled={!districtId || cities.length === 0}
-                                                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 appearance-none cursor-pointer disabled:opacity-50"
-                                                >
-                                                    <option value="">শহর বেছে নিন</option>
-                                                    {cities.map((c) => (
-                                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     {/* Delivery Selection */}
                                     <div className="space-y-4 pt-4">
                                         <p className="font-bold text-gray-900 flex items-center gap-2">
@@ -281,9 +232,8 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                         </p>
                                         <div className="grid grid-cols-1 gap-3">
                                             {[
-                                                { label: "ঢাকা সিটির ভেতরে", price: 50 },
-                                                { label: "ঢাকা সিটির বাহিরে", price: 80 },
-                                                { label: "ঢাকা জেলার বাহিরে", price: 100 },
+                                                { label: "ঢাকা সিটির ভেতরে", price: 60 },
+                                                { label: "ঢাকার বাইরে", price: 120 },
                                             ].map((opt) => (
                                                 <label
                                                     key={opt.price}
@@ -310,17 +260,6 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                                 </label>
                                             ))}
                                         </div>
-                                    </div>
-
-                                    {/* Note */}
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-700 ml-1">বিশেষ নির্দেশনা (ঐচ্ছিক)</label>
-                                        <textarea
-                                            value={note}
-                                            onChange={(e) => setNote(e.target.value)}
-                                            placeholder="কোনো বিশেষ নির্দেশনা থাকলে লিখুন..."
-                                            className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white min-h-[80px] transition-all"
-                                        />
                                     </div>
 
                                     {/* Financial Summary */}
