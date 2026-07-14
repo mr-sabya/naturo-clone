@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import Link from "next/link";
 import {
     ChevronRight,
@@ -8,12 +10,99 @@ import {
     MapPin,
     Search,
     Clock,
-    AlertCircle
+    XCircle,
+    Loader2,
 } from "lucide-react";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
+const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
+const HEADERS = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-Tenant-Id": TENANT_ID,
+};
+
+interface TrackedItem {
+    product_id: number;
+    name: string;
+    image: string | null;
+    quantity: number;
+    price: number;
+    total: number;
+}
+
+interface TrackedOrder {
+    order_number: string;
+    status: string;
+    placed_at: string | null;
+    name: string;
+    phone: string;
+    address: string;
+    payment_method: string;
+    subtotal: number;
+    delivery_fee: number;
+    total: number;
+    items: TrackedItem[];
+}
+
+// Matches the OrderStatus enum used by OrderController on the backend.
+const STATUS_STEPS = [
+    { key: "pending", label: "Order Confirmed", icon: CheckCircle2, desc: "We've received your order." },
+    { key: "confirmed", label: "Confirmed", icon: CheckCircle2, desc: "Our team has confirmed your order." },
+    { key: "processing", label: "Packed with Care", icon: Package, desc: "Your order is being prepared." },
+    { key: "shipped", label: "Out for Delivery", icon: Truck, desc: "Your order is on its way." },
+    { key: "delivered", label: "Delivered", icon: MapPin, desc: "Your order has arrived." },
+];
+
+function formatDate(iso: string | null) {
+    if (!iso) return "";
+    try {
+        return new Date(iso).toLocaleString("en-BD", { dateStyle: "medium", timeStyle: "short" });
+    } catch {
+        return iso;
+    }
+}
+
 export default function OrderTrackingPage() {
-    // Mock tracking data - in a real app, you'd fetch this based on a query param
-    const orderStatus = "shipped"; // options: 'processing', 'shipped', 'delivered'
+    const [orderNumber, setOrderNumber] = useState("");
+    const [phone, setPhone] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [order, setOrder] = useState<TrackedOrder | null>(null);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!orderNumber.trim()) {
+            setError("অর্ডার নম্বর দিন।");
+            return;
+        }
+        setLoading(true);
+        setError("");
+        setOrder(null);
+        try {
+            const res = await fetch(`${API_BASE}/orders/track`, {
+                method: "POST",
+                headers: HEADERS,
+                body: JSON.stringify({
+                    order_number: orderNumber.trim(),
+                    phone: phone.trim() || undefined,
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                setError(data.message || "অর্ডারটি খুঁজে পাওয়া যায়নি।");
+                return;
+            }
+            setOrder(data.data);
+        } catch {
+            setError("সার্ভারে সমস্যা হচ্ছে, দয়া করে পরে চেষ্টা করুন।");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const isCancelled = order?.status === "cancelled";
+    const currentStepIndex = order ? STATUS_STEPS.findIndex((s) => s.key === order.status) : -1;
 
     return (
         <div className="min-h-screen bg-[#fffcf5] selection:bg-emerald-100 selection:text-emerald-900">
@@ -48,95 +137,128 @@ export default function OrderTrackingPage() {
                                 <Search size={20} className="text-emerald-700" />
                                 Find Your Order
                             </h2>
-                            <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] uppercase tracking-widest font-bold text-emerald-800 ml-1">Order ID</label>
+                                    <label className="text-[10px] uppercase tracking-widest font-bold text-emerald-800 ml-1">Order Number</label>
                                     <input
                                         type="text"
-                                        placeholder="e.g. PK-98765"
+                                        value={orderNumber}
+                                        onChange={(e) => setOrderNumber(e.target.value)}
+                                        placeholder="e.g. ORD-20260714-ABC123"
                                         className="w-full px-5 py-4 bg-[#fdfbf7] border border-emerald-100 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all placeholder:text-gray-300"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] uppercase tracking-widest font-bold text-emerald-800 ml-1">Email Address</label>
+                                    <label className="text-[10px] uppercase tracking-widest font-bold text-emerald-800 ml-1">Mobile Number</label>
                                     <input
-                                        type="email"
-                                        placeholder="nature@example.com"
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="01XXXXXXXXX"
                                         className="w-full px-5 py-4 bg-[#fdfbf7] border border-emerald-100 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all placeholder:text-gray-300"
                                     />
                                 </div>
-                                <button className="md:col-span-2 mt-2 w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold hover:bg-emerald-800 transition-all shadow-lg shadow-emerald-900/10">
-                                    Track Status
+                                {error && (
+                                    <p className="md:col-span-2 text-red-600 text-sm font-medium">{error}</p>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="md:col-span-2 mt-2 w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold hover:bg-emerald-800 transition-all shadow-lg shadow-emerald-900/10 disabled:opacity-60 flex items-center justify-center gap-2"
+                                >
+                                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
+                                    {loading ? "খোঁজা হচ্ছে..." : "Track Status"}
                                 </button>
                             </form>
                         </section>
 
-                        {/* 2. Visual Tracking Timeline (Visible when order found) */}
-                        <section className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                            <div className="bg-white p-8 md:p-12 rounded-[2rem] border border-emerald-100 shadow-[0_15px_40px_rgba(0,77,44,0.04)]">
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
-                                    <div>
-                                        <p className="text-[10px] uppercase tracking-widest text-emerald-600 font-bold mb-1">Current Status</p>
-                                        <h3 className="text-2xl font-serif text-emerald-900">In Transit</h3>
+                        {/* 2. Result */}
+                        {order && (
+                            <section className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                                <div className="bg-white p-8 md:p-12 rounded-[2rem] border border-emerald-100 shadow-[0_15px_40px_rgba(0,77,44,0.04)]">
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
+                                        <div>
+                                            <p className="text-[10px] uppercase tracking-widest text-emerald-600 font-bold mb-1">Order {order.order_number}</p>
+                                            <h3 className="text-2xl font-serif text-emerald-900">
+                                                {isCancelled ? "Cancelled" : STATUS_STEPS[Math.max(currentStepIndex, 0)]?.label ?? order.status}
+                                            </h3>
+                                        </div>
+                                        <div className="text-left md:text-right">
+                                            <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Placed On</p>
+                                            <p className="text-lg font-medium text-emerald-900">{formatDate(order.placed_at)}</p>
+                                        </div>
                                     </div>
-                                    <div className="text-left md:text-right">
-                                        <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Expected Delivery</p>
-                                        <p className="text-lg font-medium text-emerald-900">March 25, 2024</p>
+
+                                    {isCancelled ? (
+                                        <div className="flex items-center gap-4 p-6 bg-red-50 border border-red-100 rounded-2xl">
+                                            <XCircle size={28} className="text-red-500 shrink-0" />
+                                            <p className="text-red-700 font-medium">This order has been cancelled.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="relative space-y-12 before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[2px] before:bg-emerald-50">
+                                            {STATUS_STEPS.map((step, idx) => {
+                                                const Icon = step.icon;
+                                                const done = currentStepIndex >= 0 && idx < currentStepIndex;
+                                                const current = idx === currentStepIndex;
+                                                const pending = currentStepIndex >= 0 && idx > currentStepIndex;
+                                                return (
+                                                    <div key={step.key} className={`relative flex gap-6 ${pending ? "opacity-40" : ""}`}>
+                                                        <div
+                                                            className={`z-10 w-10 h-10 rounded-full flex items-center justify-center ring-8 ring-white ${
+                                                                current
+                                                                    ? "bg-emerald-900 text-white animate-pulse"
+                                                                    : done
+                                                                    ? "bg-emerald-100 text-emerald-700"
+                                                                    : "bg-gray-100 text-gray-400"
+                                                            }`}
+                                                        >
+                                                            <Icon size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className={`font-bold ${pending ? "text-gray-900" : "text-emerald-900"}`}>{step.label}</h4>
+                                                            <p className="text-xs text-gray-400 mt-1 font-light italic">{step.desc}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {/* Order details */}
+                                    <div className="mt-12 pt-8 border-t border-emerald-50 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div>
+                                            <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Delivery Info</p>
+                                            <p className="font-bold text-emerald-900">{order.name}</p>
+                                            <p className="text-sm text-gray-600">{order.phone}</p>
+                                            <p className="text-sm text-gray-600">{order.address}</p>
+                                            <p className="text-xs text-gray-400 mt-1 uppercase">{order.payment_method === "cod" ? "Cash on Delivery" : "Online Payment"}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Items</p>
+                                            <div className="space-y-3">
+                                                {order.items.map((item) => (
+                                                    <div key={item.product_id} className="flex justify-between text-sm">
+                                                        <span className="text-gray-700">{item.name} × {item.quantity}</span>
+                                                        <span className="font-bold text-emerald-900">৳{item.total.toLocaleString()}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="mt-4 pt-4 border-t border-emerald-50 space-y-1 text-sm">
+                                                <div className="flex justify-between text-gray-500">
+                                                    <span>Subtotal</span><span>৳{order.subtotal.toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex justify-between text-gray-500">
+                                                    <span>Delivery Fee</span><span>৳{order.delivery_fee.toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex justify-between font-bold text-emerald-900 text-base pt-1">
+                                                    <span>Total</span><span>৳{order.total.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* Stepper Component */}
-                                <div className="relative space-y-12 before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[2px] before:bg-emerald-50">
-
-                                    {/* Step 1: Completed */}
-                                    <div className="relative flex gap-6">
-                                        <div className="z-10 w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center ring-8 ring-white">
-                                            <CheckCircle2 size={20} />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-emerald-900">Order Confirmed</h4>
-                                            <p className="text-sm text-gray-500">March 20, 2024 • 10:30 AM</p>
-                                            <p className="text-xs text-gray-400 mt-1 font-light italic text-pretty">Your organic products are being hand-picked from our farms.</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Step 2: Completed */}
-                                    <div className="relative flex gap-6">
-                                        <div className="z-10 w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center ring-8 ring-white">
-                                            <Package size={20} />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-emerald-900">Packed with Care</h4>
-                                            <p className="text-sm text-gray-500">March 21, 2024 • 02:15 PM</p>
-                                            <p className="text-xs text-gray-400 mt-1 font-light italic">Secured in plastic-free, biodegradable packaging.</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Step 3: Current */}
-                                    <div className="relative flex gap-6">
-                                        <div className="z-10 w-10 h-10 bg-emerald-900 text-white rounded-full flex items-center justify-center ring-8 ring-white animate-pulse">
-                                            <Truck size={20} />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-emerald-900">Out for Delivery</h4>
-                                            <p className="text-sm text-emerald-700 font-medium">In Transit via Eco-Courier</p>
-                                            <p className="text-xs text-gray-400 mt-1 font-light italic">Location: Central Sorting Facility, Kerala</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Step 4: Pending */}
-                                    <div className="relative flex gap-6 opacity-40">
-                                        <div className="z-10 w-10 h-10 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center ring-8 ring-white">
-                                            <MapPin size={20} />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-gray-900">Delivered</h4>
-                                            <p className="text-sm text-gray-500">Awaiting arrival</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
+                            </section>
+                        )}
                     </div>
 
                     {/* Sidebar */}

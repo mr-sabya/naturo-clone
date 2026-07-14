@@ -39,7 +39,7 @@ const ContactPage = () => {
                                     </div>
                                     <div>
                                         <p className="font-semibold text-gray-900">Our Location</p>
-                                        <p className="text-gray-600">123 Eco Farm Road, Nature Valley, <br />Kerala, India 682001</p>
+                                        <p className="text-gray-600">Level-5, Noor Tower, <br />110 Bir Uttam CR Dutta Rd, Dhaka</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-4">
@@ -48,7 +48,7 @@ const ContactPage = () => {
                                     </div>
                                     <div>
                                         <p className="font-semibold text-gray-900">Phone Number</p>
-                                        <p className="text-gray-600">+91 98765 43210</p>
+                                        <p className="text-gray-600">09639812525</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-4">
@@ -57,7 +57,7 @@ const ContactPage = () => {
                                     </div>
                                     <div>
                                         <p className="font-semibold text-gray-900">Email Address</p>
-                                        <p className="text-gray-600">hello@prakritiz.com</p>
+                                        <p className="text-gray-600">hello@naturo.com</p>
                                     </div>
                                 </li>
                             </ul>
@@ -128,7 +128,7 @@ const ContactPage = () => {
                 {/* Map Section */}
                 <div className="mt-16 rounded-2xl overflow-hidden h-96 shadow-sm border border-emerald-100">
                     <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125745.72223847844!2d76.2203014972656!3d9.971393300000008!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3b080d514ab315e5%3A0x6739955740445a4!2sKochi%2C%20Kerala!5e0!3m2!1sen!2sin!4v1710000000000!5m2!1sen!2sin"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3651.913417956766!2d90.38537!3d23.74882!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8c7d4c1e8b1%3A0x0!2sBir%20Uttam%20C%20R%20Datta%20Rd%2C%20Dhaka!5e0!3m2!1sen!2sbd!4v1710000000000!5m2!1sen!2sbd"
                         width="100%"
                         height="100%"
                         style={{ border: 0 }}

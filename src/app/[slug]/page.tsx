@@ -63,6 +63,43 @@ const contentMap: Record<string, PageContent> = {
             </>
         ),
     },
+    "how-to-order": {
+        category: "Customer Care",
+        title: "How to Order",
+        description: "A step-by-step guide to ordering from Naturo.",
+        content: (
+            <>
+                <p>Ordering with us is simple — no account required.</p>
+                <h2>1. Browse & Select</h2>
+                <p>Pick a product from the Shop page or a category, choose a variant if available, and set your quantity.</p>
+                <h2>2. Checkout</h2>
+                <p>Enter your name, mobile number, and delivery address. Choose your delivery area to see the shipping charge.</p>
+                <h2>3. Confirm Your Order</h2>
+                <p>Select Cash on Delivery or Online Payment and confirm. You&apos;ll get an order number right away — save it to track your order.</p>
+                <h2>4. Delivery</h2>
+                <p>Our representative will call to confirm your order before it ships. Pay on delivery if you chose Cash on Delivery.</p>
+            </>
+        ),
+    },
+    "faq": {
+        category: "Customer Care",
+        title: "FAQ",
+        description: "Answers to common questions about ordering from Naturo.",
+        content: (
+            <>
+                <h2>Are your products genuinely organic?</h2>
+                <p>Yes — every product is sourced and processed to keep it free of synthetic additives.</p>
+                <h2>How long does delivery take?</h2>
+                <p>Inside Dhaka City, most orders arrive within 1-2 days. Outside Dhaka, delivery typically takes 2-4 business days.</p>
+                <h2>Can I pay on delivery?</h2>
+                <p>Yes, Cash on Delivery is available on every order alongside online payment.</p>
+                <h2>How do I track my order?</h2>
+                <p>Use the Order Tracking page with your order number and the mobile number you ordered with.</p>
+                <h2>What if I&apos;m not satisfied with a product?</h2>
+                <p>See our Return &amp; Refund policy — most items are eligible for return within 7 days in original packaging.</p>
+            </>
+        ),
+    },
 };
 
 /** 
