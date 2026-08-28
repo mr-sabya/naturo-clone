@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
     Search,
     ShoppingCart,
@@ -20,10 +22,19 @@ interface HeaderProps {
 }
 
 const Header = ({ logoUrl, siteName = "Naturo" }: HeaderProps) => {
+    const router = useRouter();
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
     const hasHydrated = useCartStore((s) => s.hasHydrated);
     const count = useCartStore((s) => s.count);
     const subtotal = useCartStore((s) => s.subtotal);
+
+    const submitSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        const query = searchQuery.trim();
+        if (!query) return;
+        router.push(`/shop?search=${encodeURIComponent(query)}`);
+    };
 
     // Before the persisted cart has rehydrated on the client, render as empty —
     // must match the server-rendered HTML exactly to avoid a hydration mismatch.
@@ -62,19 +73,28 @@ const Header = ({ logoUrl, siteName = "Naturo" }: HeaderProps) => {
                         </button>
 
                         <Link href="/" className="flex items-center gap-2 min-w-fit">
-                            <img src={logoUrl || "/images/logo.png"} alt={`${siteName} Logo`} className="h-12 w-auto" />
+                            <Image
+                                src={logoUrl || "/images/logo.png"}
+                                alt={`${siteName} Logo`}
+                                width={160}
+                                height={48}
+                                unoptimized
+                                className="h-12 w-auto"
+                            />
                         </Link>
 
-                        <div className="hidden md:flex flex-1 max-w-xl relative mx-4">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                        <form onSubmit={submitSearch} className="hidden md:flex flex-1 max-w-xl relative mx-4">
+                            <button type="submit" className="absolute left-4 top-1/2 -translate-y-1/2" aria-label="Search">
                                 <Search size={18} className="text-[#00AA4E]" />
-                            </div>
+                            </button>
                             <input
                                 type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search products (e.g. Honey, Nuts...)"
                                 className="w-full bg-[#00150a]/40 border border-white/10 rounded-full py-2.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00AA4E]/50 focus:border-[#00AA4E] transition-all placeholder:text-gray-500"
                             />
-                        </div>
+                        </form>
 
                         <div className="flex items-center gap-4 md:gap-8">
                             <Link href="/order-tracking" className="hidden sm:flex items-center gap-2 cursor-pointer group">
@@ -110,16 +130,20 @@ const Header = ({ logoUrl, siteName = "Naturo" }: HeaderProps) => {
                 </div>
 
                 {/* Mobile Search */}
-                <div className="md:hidden bg-[#002d17] px-4 pb-4">
+                <form onSubmit={submitSearch} className="md:hidden bg-[#002d17] px-4 pb-4">
                     <div className="relative">
                         <input
                             type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search Naturo..."
                             className="w-full bg-[#00150a]/40 border border-white/10 rounded-md py-2 px-10 text-sm"
                         />
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2" aria-label="Search">
+                            <Search size={16} className="text-gray-400" />
+                        </button>
                     </div>
-                </div>
+                </form>
             </header>
 
             <SideCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartItem } from "@/types";
+import { trackAddToCart, trackRemoveFromCart } from "@/lib/gtm";
 
 interface CartState {
     items: CartItem[];
@@ -42,6 +43,7 @@ export const useCartStore = create<CartState>()(
             setHasHydrated: (v) => set({ hasHydrated: v }),
 
             addItem: (newItem) => {
+                trackAddToCart(newItem);
                 set((state) => {
                     const key = itemKey(newItem.product_id, newItem.variant_id);
                     const exists = state.items.find(
@@ -60,6 +62,10 @@ export const useCartStore = create<CartState>()(
 
             removeItem: (id, variantId) => {
                 set((state) => {
+                    const removed = state.items.find(
+                        (i) => itemKey(i.product_id, i.variant_id) === itemKey(id, variantId)
+                    );
+                    if (removed) trackRemoveFromCart(removed);
                     const newItems = state.items.filter(
                         (i) => itemKey(i.product_id, i.variant_id) !== itemKey(id, variantId)
                     );
@@ -71,6 +77,14 @@ export const useCartStore = create<CartState>()(
                 if (quantity < 1) {
                     get().removeItem(id, variantId);
                     return;
+                }
+                const existing = get().items.find(
+                    (i) => itemKey(i.product_id, i.variant_id) === itemKey(id, variantId)
+                );
+                if (existing && quantity !== existing.quantity) {
+                    const delta = quantity - existing.quantity;
+                    if (delta > 0) trackAddToCart({ ...existing });
+                    else trackRemoveFromCart({ ...existing, quantity: -delta });
                 }
                 set((state) => {
                     const newItems = state.items.map((i) =>

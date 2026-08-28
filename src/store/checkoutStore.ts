@@ -7,12 +7,6 @@ export interface DeliveryInfo {
     phone: string;
     address: string;
     note: string;
-    divisionId: number | null;
-    divisionName: string;
-    districtId: number | null;
-    districtName: string;
-    cityId: number | null;
-    cityName: string;
     deliveryCharge: number;
 }
 
@@ -30,12 +24,6 @@ const DEFAULTS: Omit<CheckoutState, "setDelivery" | "setPaymentMethod" | "hydrat
     phone: "",
     address: "",
     note: "",
-    divisionId: null,
-    divisionName: "",
-    districtId: null,
-    districtName: "",
-    cityId: null,
-    cityName: "",
     deliveryCharge: 0,
     paymentMethod: "cod",
 };
@@ -68,12 +56,6 @@ export const useCheckoutStore = create<CheckoutState>()((set, get) => ({
                     phone: s.phone,
                     address: s.address,
                     note: s.note,
-                    divisionId: s.divisionId,
-                    divisionName: s.divisionName,
-                    districtId: s.districtId,
-                    districtName: s.districtName,
-                    cityId: s.cityId,
-                    cityName: s.cityName,
                     deliveryCharge: s.deliveryCharge,
                     paymentMethod: s.paymentMethod,
                 })

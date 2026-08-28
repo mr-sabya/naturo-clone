@@ -102,6 +102,30 @@ export interface Category {
     image?: string;
 }
 
+export interface HomepageCategorySection {
+    id: number;
+    name: string;
+    slug: string;
+    products: Product[];
+}
+
+export interface WeCareFeature {
+    icon: string;
+    title: string;
+    description: string;
+}
+
+export interface WeCareSection {
+    eyebrow_text: string | null;
+    heading: string | null;
+    heading_highlight: string | null;
+    description: string | null;
+    main_image: string | null;
+    floating_image_1: string | null;
+    floating_image_2: string | null;
+    features: WeCareFeature[];
+}
+
 export interface BannerTitle {
     upper?: string;
     main?: string;
@@ -110,6 +134,7 @@ export interface BannerTitle {
 export interface Banner {
     id: number;
     image: string;
+    display_mode?: "content" | "image_only";
     title?: string | BannerTitle;
     subtitle?: string;
     description?: string;
@@ -117,23 +142,6 @@ export interface Banner {
     link?: string;
     search_placeholder?: string;
     tags?: string[];
-}
-
-export interface Division {
-    id: number;
-    name: string;
-}
-
-export interface District {
-    id: number;
-    name: string;
-    division_id: number;
-}
-
-export interface City {
-    id: number;
-    name: string;
-    district_id: number;
 }
 
 // Matches OrderController::store's validation rules in the em-group backend exactly:
@@ -181,4 +189,25 @@ export interface CartItem {
     quantity: number;
     variant_id?: number;
     variant_name?: string;
+}
+
+export interface SpinWheelSegment {
+    id: number;
+    label: string;
+    color: string | null;
+    sort_order: number;
+}
+
+export interface SpinWheelConfig {
+    id: number;
+    title: string;
+    subtitle?: string | null;
+    button_text: string;
+    segments: SpinWheelSegment[];
+}
+
+export interface SpinResult {
+    segment_id: number | null;
+    label: string | null;
+    color: string | null;
 }

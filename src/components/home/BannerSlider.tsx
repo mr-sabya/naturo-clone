@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
@@ -23,36 +23,17 @@ function renderTitle(title: string | BannerTitle | undefined) {
     );
 }
 
-export default function BannerSlider() {
-    const [banners, setBanners] = useState<Banner[]>([]);
-    const [loaded, setLoaded] = useState(false);
+interface BannerSliderProps {
+    banners: Banner[];
+}
+
+// Banners are fetched server-side (see app/(site)/page.tsx) and passed in as
+// props — this component only owns the carousel's client-side interactivity,
+// so there's no client-side fetch/loading-spinner waterfall on first paint.
+export default function BannerSlider({ banners }: BannerSliderProps) {
     const [emblaRef] = useEmblaCarousel({ loop: true, duration: 30 }, [
         Autoplay({ delay: 6000, stopOnInteraction: false }),
     ]);
-
-    useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/hero-banners`, {
-            headers: {
-                Accept: "application/json",
-                "X-Tenant-Id": process.env.NEXT_PUBLIC_TENANT_ID!,
-            },
-        })
-            .then((r) => r.json())
-            .then((data) => {
-                const list: Banner[] = Array.isArray(data) ? data : data.data ?? [];
-                setBanners(list);
-            })
-            .catch(() => {})
-            .finally(() => setLoaded(true));
-    }, []);
-
-    if (!loaded) {
-        return (
-            <section className="relative overflow-hidden bg-[#f9f8f3] h-[500px] md:h-[650px] flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-naturoGreen border-t-transparent rounded-full animate-spin" />
-            </section>
-        );
-    }
 
     if (banners.length === 0) return null;
 
@@ -60,7 +41,9 @@ export default function BannerSlider() {
         <section className="relative overflow-hidden bg-[#f9f8f3]">
             <div className="w-full" ref={emblaRef}>
                 <div className="flex">
-                    {banners.map((slide, index) => (
+                    {banners.map((slide, index) => {
+                        const isImageOnly = slide.display_mode === "image_only";
+                        return (
                         <div
                             key={slide.id}
                             className="min-w-0 shrink-0 grow-0 basis-full relative h-[500px] md:h-[650px] lg:h-[650px]"
@@ -73,9 +56,12 @@ export default function BannerSlider() {
                                     priority={index === 0}
                                     className="object-cover object-center"
                                 />
-                                <div className="absolute inset-0 bg-black/20 md:bg-gradient-to-r md:from-black/50 md:to-transparent" />
+                                {!isImageOnly && (
+                                    <div className="absolute inset-0 bg-black/20 md:bg-gradient-to-r md:from-black/50 md:to-transparent" />
+                                )}
                             </div>
 
+                            {!isImageOnly && (
                             <div className="relative h-full container mx-auto px-6 md:px-14 flex flex-col justify-center">
                                 <div className="max-w-2xl text-white space-y-4 md:space-y-6">
                                     {slide.subtitle && (
@@ -115,8 +101,10 @@ export default function BannerSlider() {
                                     )}
                                 </div>
                             </div>
+                            )}
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </section>

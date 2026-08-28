@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Minus, Plus, Trash2, ChevronLeft } from "lucide-react";
+import { Minus, Plus, Trash2, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useCartStore } from "@/store/cartStore";
 import { parsePrice, parseOriginalPrice } from "@/lib/api";

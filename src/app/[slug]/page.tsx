@@ -1,7 +1,34 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
 import { ChevronRight } from "lucide-react";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import { getSettings } from "@/lib/settings";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
+const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
+
+/**
+ * naturo-clone (unlike germanylifecare) has a single all-in-one page per
+ * product at `/product/{slug}` — there's no separate short-URL ad-funnel
+ * page to distinguish it from. So a non-policy slug here just needs to land
+ * somewhere real instead of 404ing: redirect straight to the real product
+ * page rather than duplicating its hero/benefits/checkout rendering here.
+ */
+async function productExists(slug: string): Promise<boolean> {
+    try {
+        const res = await fetch(`${API_BASE}/products/${slug}`, {
+            headers: { Accept: "application/json", "X-Tenant-Id": TENANT_ID },
+            next: { revalidate: 120, tags: ["products", `product:${slug}`] },
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        return Boolean(data?.success && data?.product);
+    } catch {
+        return false;
+    }
+}
 
 /** 
  * 1. TYPES 
@@ -125,10 +152,19 @@ export default async function DynamicPolicyPage({ params }: PageProps) {
     const { slug } = await params;
     const data = contentMap[slug];
 
-    if (!data) notFound();
+    if (!data) {
+        if (await productExists(slug)) {
+            redirect(`/product/${slug}`);
+        }
+        notFound();
+    }
+
+    const settings = await getSettings();
 
     return (
         <div className="min-h-screen bg-[#fffcf5] selection:bg-emerald-100 selection:text-emerald-900">
+            <Header logoUrl={settings.logo_url} siteName={settings.site_name} />
+
             {/* Header: Refined & Minimal */}
             <div className="bg-gray-50 py-3 border-b border-gray-100">
                 <div className="container mx-auto px-4 flex items-center gap-2 text-xs md:text-sm text-gray-500">
@@ -212,21 +248,7 @@ export default async function DynamicPolicyPage({ params }: PageProps) {
                 </div>
             </main>
 
-            {/* Aesthetic Footer Branding */}
-            <footer className="bg-white py-24 border-t border-emerald-50">
-                <div className="max-w-6xl mx-auto px-6">
-                    <div className="flex flex-col items-center text-center space-y-6">
-                        <div className="w-12 h-px bg-emerald-100" />
-                        <div className="text-3xl grayscale opacity-30">🌿</div>
-                        <p className="text-gray-400 text-[11px] font-bold uppercase tracking-[0.4em]">
-                            Rooted in Nature • Grown with Integrity
-                        </p>
-                        <p className="text-gray-300 text-[10px] font-light max-w-xs">
-                            © 2024 Prakritiz Organic Solutions. All rights reserved. Nature is our only shareholder.
-                        </p>
-                    </div>
-                </div>
-            </footer>
+            <Footer logoUrl={settings.logo_url} siteName={settings.site_name} />
         </div>
     );
 }

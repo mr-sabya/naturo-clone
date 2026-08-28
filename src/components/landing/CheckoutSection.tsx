@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import {
-    Minus, Plus, ShoppingBag, ShieldCheck,
+    Minus, Plus, ShieldCheck,
     PhoneCall, CheckCircle2, Truck, Info, MapPin, Loader2
 } from "lucide-react";
 import { parsePrice, parseOriginalPrice } from "@/lib/api";
+import { trackViewItem } from "@/lib/gtm";
 import type { Product, OrderPayload } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -18,16 +19,18 @@ interface CheckoutSectionProps {
 }
 
 export default function CheckoutSection({ product }: CheckoutSectionProps) {
-    const FALLBACK_IMAGES = ["/images/products/product_1.webp", "/images/products/product_2.webp", "/images/products/product_3.webp"];
-    const galleryRaw = product?.gallery?.map((g) => g.url).filter(Boolean) ?? product?.images?.filter(Boolean) ?? [];
-    const rawImages: string[] = galleryRaw.length > 0
-        ? galleryRaw
-        : product?.main_image
-        ? [product.main_image]
-        : product?.image
-        ? [product.image]
-        : [];
-    const images: string[] = rawImages.length ? rawImages : FALLBACK_IMAGES;
+    const images: string[] = useMemo(() => {
+        const FALLBACK_IMAGES = ["/images/products/product_1.webp", "/images/products/product_2.webp", "/images/products/product_3.webp"];
+        const galleryRaw = product?.gallery?.map((g) => g.url).filter(Boolean) ?? product?.images?.filter(Boolean) ?? [];
+        const rawImages: string[] = galleryRaw.length > 0
+            ? galleryRaw
+            : product?.main_image
+            ? [product.main_image]
+            : product?.image
+            ? [product.image]
+            : [];
+        return rawImages.length ? rawImages : FALLBACK_IMAGES;
+    }, [product]);
 
     const rawPrice = product ? (product.effective_price ?? product.sale_price ?? product.price) : undefined;
     const rawOriginal = product ? (product.base_price ?? product.regular_price ?? product.original_price) : undefined;
@@ -44,7 +47,12 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
 
     // Gallery
     const [mainImage, setMainImage] = useState(images[0]);
-    useEffect(() => { setMainImage(images[0]); }, [product?.id]);
+    useEffect(() => { setMainImage(images[0]); }, [images]);
+
+    // Fires once per page view, with the price shown at first paint — a
+    // later variant switch is a configuration change, not a new page view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { if (product) trackViewItem(product, effectivePrice); }, [product?.id]);
 
     // Order form state
     const [quantity, setQuantity] = useState(1);

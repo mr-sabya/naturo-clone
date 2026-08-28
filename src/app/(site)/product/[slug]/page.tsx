@@ -41,7 +41,10 @@ export default async function ProductPage({
     let similarProducts: Product[] = [];
 
     try {
-        const productRes = await fetch(`${API_BASE}/products/${slug}`, { headers: HEADERS, cache: "no-store" });
+        const productRes = await fetch(`${API_BASE}/products/${slug}`, {
+            headers: HEADERS,
+            next: { revalidate: 60, tags: ["products", `product:${slug}`] },
+        });
         if (productRes.ok) {
             const data = await productRes.json();
             // Backend returns { success, product: {...}, related: [...] } flat — not nested under `data`.

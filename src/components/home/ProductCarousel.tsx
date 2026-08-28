@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
+import type { EmblaCarouselType } from "embla-carousel";
 import { ChevronLeft, ChevronRight, ChevronRightIcon } from "lucide-react";
 import ProductCard from "../product/ProductCard";
 import Link from "next/link";
@@ -36,16 +37,24 @@ export default function ProductCarousel({ title, products, viewAllLink }: Produc
     const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
     const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
 
-    const onSelect = useCallback((emblaApi: any) => {
-        setCanScrollPrev(emblaApi.canScrollPrev());
-        setCanScrollNext(emblaApi.canScrollNext());
+    const onSelect = useCallback((api: EmblaCarouselType) => {
+        setCanScrollPrev(api.canScrollPrev());
+        setCanScrollNext(api.canScrollNext());
     }, []);
 
     useEffect(() => {
         if (!emblaApi) return;
+        // Sync the arrow-disabled state once up front (embla's "select"/"reInit"
+        // events only fire on later interaction, not for this initial read) —
+        // a deliberate, one-time setState-in-effect for external-library sync.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         onSelect(emblaApi);
         emblaApi.on("reInit", onSelect);
         emblaApi.on("select", onSelect);
+        return () => {
+            emblaApi.off("reInit", onSelect);
+            emblaApi.off("select", onSelect);
+        };
     }, [emblaApi, onSelect]);
 
     return (

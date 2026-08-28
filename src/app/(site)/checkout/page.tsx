@@ -1,17 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Truck, User, ArrowRight } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useCheckoutStore } from "@/store/checkoutStore";
 import Stepper from "@/components/shared/Stepper";
-import type { Division, District, City } from "@/types";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
-const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
-const HEADERS = { Accept: "application/json", "X-Tenant-Id": TENANT_ID };
+import { trackBeginCheckout } from "@/lib/gtm";
 
 const DELIVERY_OPTIONS = [
     { label: "ঢাকা সিটির ভেতরে", sublabel: "Inside Dhaka City", charge: 60 },
@@ -23,63 +20,25 @@ export default function CheckoutPage() {
     const router = useRouter();
     const items = useCartStore((s) => s.items);
     const subtotal = useCartStore((s) => s.subtotal);
+    const hasHydrated = useCartStore((s) => s.hasHydrated);
     const setDelivery = useCheckoutStore((s) => s.setDelivery);
     const saveToSession = useCheckoutStore((s) => s.saveToSession);
+
+    const trackedRef = useRef(false);
+    useEffect(() => {
+        if (hasHydrated && !trackedRef.current && items.length > 0) {
+            trackBeginCheckout(items, subtotal);
+            trackedRef.current = true;
+        }
+    }, [hasHydrated, items, subtotal]);
 
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [address, setAddress] = useState("");
     const [note, setNote] = useState("");
-
-    const [divisions, setDivisions] = useState<Division[]>([]);
-    const [districts, setDistricts] = useState<District[]>([]);
-    const [cities, setCities] = useState<City[]>([]);
-
-    const [divisionId, setDivisionId] = useState<number | null>(null);
-    const [divisionName, setDivisionName] = useState("");
-    const [districtId, setDistrictId] = useState<number | null>(null);
-    const [districtName, setDistrictName] = useState("");
-    const [cityId, setCityId] = useState<number | null>(null);
-    const [cityName, setCityName] = useState("");
     const [deliveryCharge, setDeliveryCharge] = useState(0);
 
     const [errors, setErrors] = useState<Record<string, string>>({});
-
-    useEffect(() => {
-        fetch(`${API_BASE}/divisions`, { headers: HEADERS })
-            .then((r) => r.json())
-            .then((d) => setDivisions(Array.isArray(d) ? d : (d.data ?? [])))
-            .catch(() => {});
-    }, []);
-
-    useEffect(() => {
-        if (!divisionId) {
-            setDistricts([]);
-            setDistrictId(null);
-            setDistrictName("");
-            setCities([]);
-            setCityId(null);
-            setCityName("");
-            return;
-        }
-        fetch(`${API_BASE}/districts?division_id=${divisionId}`, { headers: HEADERS })
-            .then((r) => r.json())
-            .then((d) => setDistricts(Array.isArray(d) ? d : (d.data ?? [])))
-            .catch(() => {});
-    }, [divisionId]);
-
-    useEffect(() => {
-        if (!districtId) {
-            setCities([]);
-            setCityId(null);
-            setCityName("");
-            return;
-        }
-        fetch(`${API_BASE}/cities?district_id=${districtId}`, { headers: HEADERS })
-            .then((r) => r.json())
-            .then((d) => setCities(Array.isArray(d) ? d : (d.data ?? [])))
-            .catch(() => {});
-    }, [districtId]);
 
     const validate = () => {
         const errs: Record<string, string> = {};
@@ -87,9 +46,6 @@ export default function CheckoutPage() {
         if (!phone.trim() || !/^01[0-9]{9}$/.test(phone.trim()))
             errs.phone = "সঠিক মোবাইল নাম্বার দিন (01XXXXXXXXX)";
         if (!address.trim()) errs.address = "ঠিকানা আবশ্যক";
-        if (!divisionId) errs.division = "বিভাগ সিলেক্ট করুন";
-        if (!districtId) errs.district = "জেলা সিলেক্ট করুন";
-        if (!cityId) errs.city = "উপজেলা/শহর সিলেক্ট করুন";
         if (!deliveryCharge) errs.delivery = "ডেলিভারি এরিয়া সিলেক্ট করুন";
         setErrors(errs);
         return Object.keys(errs).length === 0;
@@ -102,12 +58,6 @@ export default function CheckoutPage() {
             phone: phone.trim(),
             address: address.trim(),
             note: note.trim(),
-            divisionId,
-            divisionName,
-            districtId,
-            districtName,
-            cityId,
-            cityName,
             deliveryCharge,
         });
         saveToSession();
@@ -121,12 +71,12 @@ export default function CheckoutPage() {
                     <Stepper step={3} />
                 </div>
                 <p className="text-xl font-serif font-bold text-emerald-900">কার্ট খালি</p>
-                <a
+                <Link
                     href="/shop"
                     className="bg-emerald-700 text-white px-8 py-3 rounded-2xl font-bold hover:bg-emerald-800 transition-colors"
                 >
                     কেনাকাটা করুন
-                </a>
+                </Link>
             </div>
         );
     }
@@ -186,7 +136,7 @@ export default function CheckoutPage() {
                                     value={address}
                                     onChange={(e) => setAddress(e.target.value)}
                                     rows={3}
-                                    placeholder="গ্রাম/রোড নং, পাড়া/মহল্লা"
+                                    placeholder="গ্রাম/রোড নং, পাড়া/মহল্লা, জেলা"
                                     className="w-full px-4 py-3 bg-[#fdfbf7] border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm resize-none"
                                 />
                                 {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
@@ -201,93 +151,6 @@ export default function CheckoutPage() {
                                     placeholder="স্পেশাল মেসেজ লিখুন"
                                     className="w-full px-4 py-3 bg-[#fdfbf7] border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm"
                                 />
-                            </div>
-                        </section>
-
-                        {/* Location Dropdowns */}
-                        <section className="bg-white p-6 rounded-[2rem] border border-emerald-100 shadow-sm space-y-5">
-                            <h2 className="text-lg font-serif font-semibold text-emerald-900 border-b border-emerald-50 pb-3">
-                                অবস্থান নির্বাচন
-                            </h2>
-
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-emerald-900">
-                                    বিভাগ <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={divisionId ?? ""}
-                                    onChange={(e) => {
-                                        const id = Number(e.target.value) || null;
-                                        const found = divisions.find((d) => d.id === id);
-                                        setDivisionId(id);
-                                        setDivisionName(found?.name ?? "");
-                                        setDistrictId(null);
-                                        setDistrictName("");
-                                        setCityId(null);
-                                        setCityName("");
-                                    }}
-                                    className="w-full px-4 py-3 bg-[#fdfbf7] border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm"
-                                >
-                                    <option value="">বিভাগ সিলেক্ট করুন</option>
-                                    {divisions.map((d) => (
-                                        <option key={d.id} value={d.id}>
-                                            {d.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.division && <p className="text-red-500 text-xs mt-1">{errors.division}</p>}
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-emerald-900">
-                                    জেলা <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={districtId ?? ""}
-                                    onChange={(e) => {
-                                        const id = Number(e.target.value) || null;
-                                        const found = districts.find((d) => d.id === id);
-                                        setDistrictId(id);
-                                        setDistrictName(found?.name ?? "");
-                                        setCityId(null);
-                                        setCityName("");
-                                    }}
-                                    disabled={!divisionId}
-                                    className="w-full px-4 py-3 bg-[#fdfbf7] border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    <option value="">জেলা সিলেক্ট করুন</option>
-                                    {districts.map((d) => (
-                                        <option key={d.id} value={d.id}>
-                                            {d.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.district && <p className="text-red-500 text-xs mt-1">{errors.district}</p>}
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-emerald-900">
-                                    উপজেলা / শহর <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={cityId ?? ""}
-                                    onChange={(e) => {
-                                        const id = Number(e.target.value) || null;
-                                        const found = cities.find((c) => c.id === id);
-                                        setCityId(id);
-                                        setCityName(found?.name ?? "");
-                                    }}
-                                    disabled={!districtId}
-                                    className="w-full px-4 py-3 bg-[#fdfbf7] border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    <option value="">উপজেলা/শহর সিলেক্ট করুন</option>
-                                    {cities.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
                             </div>
                         </section>
 
@@ -384,12 +247,12 @@ export default function CheckoutPage() {
                                 পেমেন্টে যান <ArrowRight size={18} />
                             </button>
 
-                            <a
+                            <Link
                                 href="/cart"
                                 className="mt-3 block text-center text-emerald-300 hover:text-white text-sm transition-colors"
                             >
                                 ← কার্টে ফিরে যান
-                            </a>
+                            </Link>
                         </div>
                     </div>
                 </div>

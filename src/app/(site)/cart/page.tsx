@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import Stepper from "@/components/shared/Stepper";
+import { trackViewCart } from "@/lib/gtm";
 
 export default function CartPage() {
     const items = useCartStore((s) => s.items);
@@ -13,6 +14,17 @@ export default function CartPage() {
     const subtotal = useCartStore((s) => s.subtotal);
     const removeItem = useCartStore((s) => s.removeItem);
     const updateQuantity = useCartStore((s) => s.updateQuantity);
+    const hasHydrated = useCartStore((s) => s.hasHydrated);
+
+    // Fires once per visit (not on every quantity tweak) — the ref guard
+    // survives the items/subtotal changing after the initial hydrated read.
+    const trackedRef = useRef(false);
+    useEffect(() => {
+        if (hasHydrated && !trackedRef.current && items.length > 0) {
+            trackViewCart(items, subtotal);
+            trackedRef.current = true;
+        }
+    }, [hasHydrated, items, subtotal]);
 
     if (count === 0) {
         return (

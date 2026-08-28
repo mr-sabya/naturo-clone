@@ -1,37 +1,23 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import type { Category } from "@/types";
 
-export default function CategorySlider() {
-    const [categories, setCategories] = useState<Category[]>([]);
+interface CategorySliderProps {
+    categories: Category[];
+}
+
+// Categories are fetched server-side (see app/(site)/page.tsx) and passed in
+// as props, matching BannerSlider — no client-side fetch waterfall.
+export default function CategorySlider({ categories }: CategorySliderProps) {
     const [emblaRef] = useEmblaCarousel(
         { loop: true, align: "start", slidesToScroll: 1, containScroll: "trimSnaps" },
         [Autoplay({ delay: 3000, stopOnInteraction: false })]
     );
-
-    useEffect(() => {
-        fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/tab-categories`,
-            {
-                headers: {
-                    Accept: "application/json",
-                    "X-Tenant-Id": process.env.NEXT_PUBLIC_TENANT_ID!,
-                },
-                cache: "no-store",
-            }
-        )
-            .then((r) => r.json())
-            .then((data) => {
-                const list: Category[] = Array.isArray(data) ? data : data.data ?? [];
-                setCategories(list);
-            })
-            .catch(() => setCategories([]));
-    }, []);
 
     if (categories.length === 0) return null;
 
@@ -46,7 +32,7 @@ export default function CategorySlider() {
                                 className="flex-[0_0_20%] sm:flex-[0_0_14%] md:flex-[0_0_11%] lg:flex-[0_0_9%] min-w-0 px-1"
                             >
                                 <Link
-                                    href={`/category/${cat.slug}`}
+                                    href={`/shop?category=${cat.slug}`}
                                     className="flex flex-col items-center group cursor-pointer"
                                 >
                                     <div className="w-14 h-14 md:w-15 md:h-15 bg-white/80 rounded-full flex items-center justify-center border border-white shadow-sm group-hover:bg-white group-hover:shadow-md transition-all duration-300">

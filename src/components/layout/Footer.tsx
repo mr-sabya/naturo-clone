@@ -35,7 +35,14 @@ export default function Footer({ logoUrl, siteName = "Naturo" }: FooterProps) {
                     <div className="md:col-span-5 space-y-8">
                         <Link href="/" className="inline-block">
                             <div className="flex items-center gap-3">
-                                <img src={logoUrl || "/images/logo.png"} alt={`${siteName} Logo`} className="h-12 w-auto" />
+                                <Image
+                                    src={logoUrl || "/images/logo.png"}
+                                    alt={`${siteName} Logo`}
+                                    width={160}
+                                    height={48}
+                                    unoptimized
+                                    className="h-12 w-auto"
+                                />
                             </div>
                         </Link>
                         <p className="text-white/60 leading-relaxed text-lg max-w-md">

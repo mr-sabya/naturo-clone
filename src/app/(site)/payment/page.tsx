@@ -2,11 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MapPin, Smartphone, CreditCard, ShieldCheck } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useCheckoutStore } from "@/store/checkoutStore";
 import Stepper from "@/components/shared/Stepper";
+import { trackPurchase } from "@/lib/gtm";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
@@ -35,13 +37,6 @@ export default function PaymentPage() {
     const name = useCheckoutStore((s) => s.name);
     const phone = useCheckoutStore((s) => s.phone);
     const address = useCheckoutStore((s) => s.address);
-    const note = useCheckoutStore((s) => s.note);
-    const divisionId = useCheckoutStore((s) => s.divisionId);
-    const districtId = useCheckoutStore((s) => s.districtId);
-    const cityId = useCheckoutStore((s) => s.cityId);
-    const divisionName = useCheckoutStore((s) => s.divisionName);
-    const districtName = useCheckoutStore((s) => s.districtName);
-    const cityName = useCheckoutStore((s) => s.cityName);
     const deliveryCharge = useCheckoutStore((s) => s.deliveryCharge);
     const paymentMethod = useCheckoutStore((s) => s.paymentMethod);
 
@@ -60,6 +55,19 @@ export default function PaymentPage() {
         }
     }, [hydrated, name, router]);
 
+    // Same three tiers as checkout/page.tsx's DELIVERY_OPTIONS, resolved to
+    // descriptive location-name strings — the backend's real order validator
+    // (OrderController::store) wants division_name/district_name/city_name
+    // strings, not ids (there's no division/district/city selector anymore,
+    // see PRODUCT_PAGE_PARITY.md §3.7/§3.8 — same pattern CheckoutSection.tsx
+    // already uses for the single-product landing-page checkout).
+    const derivedLocation =
+        deliveryCharge >= 130
+            ? { division: "Outside Dhaka", district: "Outside Dhaka District", city: "Outside Dhaka District" }
+            : deliveryCharge >= 100
+            ? { division: "Dhaka", district: "Outside Dhaka City", city: "Outside Dhaka City" }
+            : { division: "Dhaka", district: "Dhaka City", city: "Dhaka" };
+
     const handleConfirm = async () => {
         if (submitting || items.length === 0) return;
         setSubmitting(true);
@@ -68,25 +76,24 @@ export default function PaymentPage() {
         try {
             let orderNumber = `ORD-${Date.now()}`;
 
+            // One flat, single-item call per cart line — mirrors
+            // OrderController::store's real validation rules exactly
+            // (product_id/variant_id/quantity/delivery_fee/division_name/
+            // district_name/city_name as top-level fields, not an `items[]`
+            // wrapper the backend never reads).
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 const payload = {
                     name,
                     phone,
                     address,
-                    note,
-                    division_id: divisionId,
-                    district_id: districtId,
-                    city_id: cityId,
-                    delivery_charge: i === 0 ? deliveryCharge : 0,
-                    payment_method: paymentMethod,
-                    items: [
-                        {
-                            product_id: item.product_id,
-                            quantity: item.quantity,
-                            ...(item.variant_id ? { variant_id: item.variant_id } : {}),
-                        },
-                    ],
+                    product_id: item.product_id,
+                    variant_id: item.variant_id ?? null,
+                    quantity: item.quantity,
+                    delivery_fee: i === 0 ? deliveryCharge : 0,
+                    division_name: derivedLocation.division,
+                    district_name: derivedLocation.district,
+                    city_name: derivedLocation.city,
                 };
 
                 const res = await fetch(`${API_BASE}/orders/checkout`, {
@@ -106,6 +113,13 @@ export default function PaymentPage() {
                         data.order_number ?? data.data?.order_number ?? orderNumber;
                 }
             }
+
+            trackPurchase({
+                transactionId: orderNumber,
+                items,
+                value: subtotal + deliveryCharge,
+                shipping: deliveryCharge,
+            });
 
             clearCart();
             clearCheckout();
@@ -129,8 +143,6 @@ export default function PaymentPage() {
         );
     }
 
-    const locationLabel = [cityName, districtName, divisionName].filter(Boolean).join(", ");
-
     return (
         <div className="min-h-screen bg-[#fffcf5] pb-20">
             <div className="max-w-5xl mx-auto px-4 pt-4">
@@ -152,12 +164,12 @@ export default function PaymentPage() {
                                         ডেলিভারি তথ্য
                                     </h2>
                                 </div>
-                                <a
+                                <Link
                                     href="/checkout"
                                     className="text-emerald-600 hover:text-emerald-800 text-xs font-bold hover:underline transition-colors"
                                 >
                                     সম্পাদনা করুন
-                                </a>
+                                </Link>
                             </div>
                             <dl className="space-y-2.5 text-sm">
                                 <div className="flex gap-2">
@@ -172,12 +184,6 @@ export default function PaymentPage() {
                                     <dt className="text-gray-400 w-24 shrink-0">ঠিকানা:</dt>
                                     <dd className="font-semibold text-emerald-900">{address}</dd>
                                 </div>
-                                {locationLabel && (
-                                    <div className="flex gap-2">
-                                        <dt className="text-gray-400 w-24 shrink-0">অবস্থান:</dt>
-                                        <dd className="font-semibold text-emerald-900">{locationLabel}</dd>
-                                    </div>
-                                )}
                                 <div className="flex gap-2">
                                     <dt className="text-gray-400 w-24 shrink-0">ডেলিভারি:</dt>
                                     <dd className="font-semibold text-emerald-900">৳{deliveryCharge}</dd>
@@ -326,12 +332,12 @@ export default function PaymentPage() {
                                 )}
                             </button>
 
-                            <a
+                            <Link
                                 href="/checkout"
                                 className="mt-3 block text-center text-emerald-300 hover:text-white text-sm transition-colors"
                             >
                                 ← চেকআউটে ফিরে যান
-                            </a>
+                            </Link>
                         </div>
                     </div>
                 </div>

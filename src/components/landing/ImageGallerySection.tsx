@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay"; // 1. Import Autoplay
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface GalleryImage {
     url: string;
@@ -32,10 +31,6 @@ export default function ImageGallerySection({ images }: ImageGalleryProps) {
     );
 
     const [selectedIndex, setSelectedIndex] = useState(0);
-
-    // Control Logic
-    const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
-    const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
 
     const onSelect = useCallback(() => {
         if (!emblaApi) return;

@@ -1,5 +1,6 @@
 import React from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 
 const AboutPage = () => {
     return (
@@ -12,10 +13,13 @@ const AboutPage = () => {
             {/* --- Hero Section --- */}
             <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 z-0">
-                    <img
+                    <Image
                         src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=2000"
                         alt="Nature Background"
-                        className="w-full h-full object-cover brightness-50"
+                        fill
+                        priority
+                        sizes="100vw"
+                        className="object-cover brightness-50"
                     />
                 </div>
                 <div className="relative z-10 text-center px-4">
@@ -53,11 +57,15 @@ const AboutPage = () => {
                         </div>
                     </div>
                     <div className="relative">
-                        <img
-                            src="https://images.unsplash.com/photo-1500651230702-0e2d8a49d4ad?auto=format&fit=crop&q=80&w=1000"
-                            alt="Organic Farming"
-                            className="rounded-2xl shadow-2xl"
-                        />
+                        <div className="relative aspect-[4/3] rounded-2xl shadow-2xl overflow-hidden">
+                            <Image
+                                src="https://images.unsplash.com/photo-1500651230702-0e2d8a49d4ad?auto=format&fit=crop&q=80&w=1000"
+                                alt="Organic Farming"
+                                fill
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                className="object-cover"
+                            />
+                        </div>
                         <div className="absolute -bottom-6 -left-6 bg-emerald-900 text-white p-8 rounded-2xl hidden lg:block">
                             <p className="italic font-serif text-xl">&quot;Nature never hurries, yet everything is accomplished.&quot;</p>
                         </div>
@@ -106,8 +114,8 @@ const AboutPage = () => {
                     &quot;Prakritiz was born from a desire to heal. We wanted to create products that don&apos;t just serve a purpose, but tell a story of heritage, love, and respect for our environment.&quot;
                 </p>
                 <div className="mt-10 flex flex-col items-center">
-                    <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4">
-                        <img src="https://i.pravatar.cc/150?u=founder" alt="Founder" />
+                    <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4">
+                        <Image src="https://i.pravatar.cc/150?u=founder" alt="Founder" fill className="object-cover" />
                     </div>
                     <h5 className="font-bold text-lg">Sabyasachi Roy</h5>
                     <p className="text-gray-500 italic">Visionary & Founder</p>
