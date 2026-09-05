@@ -21,9 +21,21 @@ export interface AppearanceSettings {
     background_color?: string;
     // Branding
     site_name?: string;
+    site_tagline?: string;
+    meta_description?: string;
     logo_url?: string;
     logo_text?: string;
     favicon_url?: string;
+    // Footer content
+    footer_description?: string;
+    footer_phone?: string;
+    footer_email?: string;
+    footer_address?: string;
+    whatsapp_number?: string;
+    social_facebook_url?: string;
+    social_instagram_url?: string;
+    social_youtube_url?: string;
+    copyright_text?: string;
     [key: string]: string | undefined;
 }
 

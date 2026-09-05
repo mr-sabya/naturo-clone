@@ -37,6 +37,7 @@ function normalizeProduct(p: Product) {
         image: p.main_image || p.image || "",
         category: p.category_name ?? p.category,
         isOutOfStock: p.stock === 0,
+        hasActiveLandingPage: p.has_active_landing_page ?? false,
     };
 }
 

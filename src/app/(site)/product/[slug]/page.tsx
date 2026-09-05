@@ -1,16 +1,11 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import CheckoutSection from "@/components/landing/CheckoutSection";
-import ImageGallerySection from "@/components/landing/ImageGallerySection";
+import ProductGallery from "@/components/product/ProductGallery";
+import ProductBuyBox from "@/components/product/ProductBuyBox";
+import ProductInfoTabs from "@/components/product/ProductInfoTabs";
 import ProductCarousel from "@/components/home/ProductCarousel";
-import CustomerReviewSlider from "@/components/landing/CustomerReviewSlider";
-import VideoReviewSection from "@/components/landing/VideoReviewSection";
-import OrderButton from "@/components/landing/OrderButton";
-import FaqAccordion from "@/components/landing/FaqAccordion";
-import ProductHero from "@/components/landing/ProductHero";
-import ProductBenefitSection from "@/components/landing/ProductBenefitSection";
-import type { Product } from "@/types";
 import { parsePrice, parseOriginalPrice } from "@/lib/api";
+import type { Product } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
@@ -27,10 +22,11 @@ function normalizeProduct(p: Product) {
         originalPrice: parseOriginalPrice(rawOriginal, rawPrice),
         image: p.main_image || p.image || "",
         category: p.category_name ?? p.category,
+        hasActiveLandingPage: p.has_active_landing_page ?? false,
     };
 }
 
-export default async function ProductPage({
+export default async function ProductDetailsPage({
     params,
 }: {
     params: Promise<{ slug: string }>;
@@ -38,19 +34,18 @@ export default async function ProductPage({
     const { slug } = await params;
 
     let product: Product | null = null;
-    let similarProducts: Product[] = [];
+    let related: Product[] = [];
 
     try {
-        const productRes = await fetch(`${API_BASE}/products/${slug}`, {
+        const res = await fetch(`${API_BASE}/products/${slug}`, {
             headers: HEADERS,
             next: { revalidate: 60, tags: ["products", `product:${slug}`] },
         });
-        if (productRes.ok) {
-            const data = await productRes.json();
-            // Backend returns { success, product: {...}, related: [...] } flat — not nested under `data`.
+        if (res.ok) {
+            const data = await res.json();
             if (data?.success) {
                 product = data.product ?? null;
-                similarProducts = Array.isArray(data.related) ? data.related : [];
+                related = Array.isArray(data.related) ? data.related : [];
             }
         }
     } catch {}
@@ -64,11 +59,14 @@ export default async function ProductPage({
         );
     }
 
-    const scrollToCheckout = "#checkout";
+    const images = (product.gallery ?? [])
+        .map((g) => g.url)
+        .filter(Boolean)
+        .concat(product.main_image ? [product.main_image] : []);
+    const uniqueImages = Array.from(new Set(images));
 
     return (
-        <div className="bg-[#fffcf5] min-h-screen scroll-smooth selection:bg-emerald-100">
-
+        <div className="bg-[#fffcf5] min-h-screen">
             {/* Breadcrumbs */}
             <div className="bg-gray-50 py-3 border-b border-gray-100">
                 <div className="container mx-auto px-4 flex items-center gap-2 text-xs md:text-sm text-gray-500">
@@ -80,45 +78,25 @@ export default async function ProductPage({
                 </div>
             </div>
 
-            {/* Hero Section */}
-            {product.hero && (
-                <ProductHero data={product.hero} scrollToCheckoutHref={scrollToCheckout} />
-            )}
-
-            {/* Gallery */}
-            <ImageGallerySection images={product.gallery ?? []} />
-
-            {/* FAQ Section */}
-            {product.faqs && product.faqs.length > 0 && (
-                <section className="bg-[#00703c] py-20 px-4">
-                    <div className="max-w-4xl mx-auto">
-                        <h2 className="text-white text-xl md:text-3xl font-bold text-center mb-12 leading-relaxed font-serif">
-                            আমরা প্রতিনিয়ত যে প্রশ্নগুলো পেয়ে থাকি
-                        </h2>
-                        <FaqAccordion faqs={product.faqs} />
+            <div className="container mx-auto px-4 py-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    <div className="lg:col-span-5 lg:sticky lg:top-10 self-start">
+                        <ProductGallery images={uniqueImages} alt={product.name} />
                     </div>
-                    <div className="flex justify-center mt-10">
-                        <Link href={scrollToCheckout}>
-                            <OrderButton />
-                        </Link>
+                    <div className="lg:col-span-7">
+                        <ProductBuyBox product={product} />
                     </div>
-                </section>
-            )}
+                </div>
 
-            {/* Description / Benefits */}
-            <ProductBenefitSection benefitData={product.benefits} scrollToCheckoutHref={scrollToCheckout} />
+                <div className="mt-12">
+                    <ProductInfoTabs product={product} />
+                </div>
+            </div>
 
-            {/* Reviews */}
-            <CustomerReviewSlider reviews={product.reviews_gallery ?? []} />
-            <VideoReviewSection videos={product.video_reviews ?? []} />
-
-            {/* Checkout */}
-            <CheckoutSection product={product} />
-
-            {similarProducts.length > 0 && (
+            {related.length > 0 && (
                 <ProductCarousel
                     title="Related Products"
-                    products={similarProducts.map(normalizeProduct)}
+                    products={related.map(normalizeProduct)}
                     viewAllLink="/shop"
                 />
             )}

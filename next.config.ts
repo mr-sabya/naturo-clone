@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    // Lets local dev proxy images from a local Laravel backend
+    // (localhost:8000) through Next's image optimizer — a built-in SSRF
+    // guard otherwise refuses any loopback/private-IP host even when it's
+    // already allow-listed below. Safe: remotePatterns still pins exactly
+    // which hosts are trusted; production images come from a real domain.
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
         protocol: "https",

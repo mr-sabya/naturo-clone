@@ -9,12 +9,7 @@ import { useCartStore } from "@/store/cartStore";
 import { useCheckoutStore } from "@/store/checkoutStore";
 import Stepper from "@/components/shared/Stepper";
 import { trackBeginCheckout } from "@/lib/gtm";
-
-const DELIVERY_OPTIONS = [
-    { label: "ঢাকা সিটির ভেতরে", sublabel: "Inside Dhaka City", charge: 60 },
-    { label: "ঢাকা সিটির বাহিরে", sublabel: "Outside Dhaka City", charge: 100 },
-    { label: "ঢাকা জেলার বাহিরে", sublabel: "Outside Dhaka District", charge: 130 },
-];
+import { useDeliveryOptions } from "@/lib/deliveryOptions";
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -36,7 +31,13 @@ export default function CheckoutPage() {
     const [phone, setPhone] = useState("");
     const [address, setAddress] = useState("");
     const [note, setNote] = useState("");
-    const [deliveryCharge, setDeliveryCharge] = useState(0);
+
+    // Delivery options — admin-managed (Admin > Website > Delivery Options),
+    // no longer hard-coded. The customer must actively pick one, same as before.
+    const { options: deliveryOptions } = useDeliveryOptions();
+    const [selectedDeliveryId, setSelectedDeliveryId] = useState<number | null>(null);
+    const selectedDeliveryOption = deliveryOptions.find((o) => o.id === selectedDeliveryId);
+    const deliveryCharge = selectedDeliveryOption?.price ?? 0;
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -46,19 +47,20 @@ export default function CheckoutPage() {
         if (!phone.trim() || !/^01[0-9]{9}$/.test(phone.trim()))
             errs.phone = "সঠিক মোবাইল নাম্বার দিন (01XXXXXXXXX)";
         if (!address.trim()) errs.address = "ঠিকানা আবশ্যক";
-        if (!deliveryCharge) errs.delivery = "ডেলিভারি এরিয়া সিলেক্ট করুন";
+        if (!selectedDeliveryOption) errs.delivery = "ডেলিভারি এরিয়া সিলেক্ট করুন";
         setErrors(errs);
         return Object.keys(errs).length === 0;
     };
 
     const handleProceed = () => {
-        if (!validate()) return;
+        if (!validate() || !selectedDeliveryOption) return;
         setDelivery({
             name: name.trim(),
             phone: phone.trim(),
             address: address.trim(),
             note: note.trim(),
             deliveryCharge,
+            deliveryLabel: selectedDeliveryOption.label,
         });
         saveToSession();
         router.push("/payment");
@@ -161,11 +163,11 @@ export default function CheckoutPage() {
                                 <h2 className="text-lg font-serif font-semibold text-emerald-900">ডেলিভারি এরিয়া</h2>
                             </div>
                             <div className="space-y-3">
-                                {DELIVERY_OPTIONS.map((opt) => (
+                                {deliveryOptions.map((opt) => (
                                     <label
-                                        key={opt.charge}
+                                        key={opt.id}
                                         className={`flex items-center justify-between p-4 border rounded-2xl cursor-pointer transition-all ${
-                                            deliveryCharge === opt.charge
+                                            selectedDeliveryId === opt.id
                                                 ? "border-emerald-600 bg-emerald-50"
                                                 : "border-gray-100 hover:border-emerald-200 bg-[#fdfbf7]"
                                         }`}
@@ -175,15 +177,15 @@ export default function CheckoutPage() {
                                                 type="radio"
                                                 name="delivery"
                                                 className="w-4 h-4 accent-emerald-700"
-                                                checked={deliveryCharge === opt.charge}
-                                                onChange={() => setDeliveryCharge(opt.charge)}
+                                                checked={selectedDeliveryId === opt.id}
+                                                onChange={() => setSelectedDeliveryId(opt.id)}
                                             />
                                             <div>
                                                 <p className="font-semibold text-emerald-900 text-sm">{opt.label}</p>
-                                                <p className="text-xs text-gray-400">{opt.sublabel}</p>
+                                                {opt.sublabel && <p className="text-xs text-gray-400">{opt.sublabel}</p>}
                                             </div>
                                         </div>
-                                        <span className="font-bold text-emerald-900">৳{opt.charge}</span>
+                                        <span className="font-bold text-emerald-900">৳{opt.price}</span>
                                     </label>
                                 ))}
                             </div>

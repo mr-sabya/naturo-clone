@@ -11,6 +11,7 @@ interface NormalizedProduct {
     image: string;
     slug: string;
     category?: string;
+    hasActiveLandingPage?: boolean;
 }
 
 interface AllProductsProps {
@@ -37,7 +38,7 @@ export default function AllProducts({ initialProducts, initialLastPage }: AllPro
             if (!res.ok) return;
             const data = await res.json();
             const newProducts = (Array.isArray(data) ? data : data.data ?? []).map(
-                (p: { id: number; name: string; slug: string; effective_price?: number; sale_price?: number; price?: string | number; base_price?: number; regular_price?: number; original_price?: string | number; main_image?: string; image?: string; category_name?: string; category?: string; stock?: number }) => {
+                (p: { id: number; name: string; slug: string; effective_price?: number; sale_price?: number; price?: string | number; base_price?: number; regular_price?: number; original_price?: string | number; main_image?: string; image?: string; category_name?: string; category?: string; stock?: number; has_active_landing_page?: boolean }) => {
                     const rawPrice = p.effective_price ?? p.sale_price ?? p.price;
                     const rawOriginal = p.base_price ?? p.regular_price ?? p.original_price;
                     return {
@@ -48,6 +49,7 @@ export default function AllProducts({ initialProducts, initialLastPage }: AllPro
                         originalPrice: rawOriginal ? (typeof rawOriginal === "number" ? rawOriginal : parseFloat(String(rawOriginal)) || undefined) : undefined,
                         image: p.main_image || p.image || "",
                         category: p.category_name ?? p.category,
+                        hasActiveLandingPage: p.has_active_landing_page ?? false,
                     };
                 }
             );
@@ -79,6 +81,7 @@ export default function AllProducts({ initialProducts, initialLastPage }: AllPro
                                 image={product.image}
                                 slug={product.slug}
                                 category={product.category}
+                                hasActiveLandingPage={product.hasActiveLandingPage}
                             />
                         </div>
                     ))}

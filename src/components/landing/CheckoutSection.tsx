@@ -2,23 +2,33 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
     Minus, Plus, ShieldCheck,
-    PhoneCall, CheckCircle2, Truck, Info, MapPin, Loader2
+    PhoneCall, CheckCircle2, Truck, Info
 } from "lucide-react";
 import { parsePrice, parseOriginalPrice } from "@/lib/api";
 import { trackViewItem } from "@/lib/gtm";
+import { getCartSessionId } from "@/lib/session";
+import { useLeadCapture } from "@/lib/orderTracking";
+import { useDeliveryOptions } from "@/lib/deliveryOptions";
 import type { Product, OrderPayload } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
 const HEADERS = { Accept: "application/json", "X-Tenant-Id": TENANT_ID };
 
+interface OrderResponse {
+    order_number?: string;
+    data?: { order_number?: string };
+}
+
 interface CheckoutSectionProps {
     product?: Product | null;
 }
 
 export default function CheckoutSection({ product }: CheckoutSectionProps) {
+    const router = useRouter();
     const images: string[] = useMemo(() => {
         const FALLBACK_IMAGES = ["/images/products/product_1.webp", "/images/products/product_2.webp", "/images/products/product_3.webp"];
         const galleryRaw = product?.gallery?.map((g) => g.url).filter(Boolean) ?? product?.images?.filter(Boolean) ?? [];
@@ -59,39 +69,35 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [address, setAddress] = useState("");
-    const [deliveryCharge, setDeliveryCharge] = useState(60);
+
+    // Delivery options — admin-managed (Admin > Website > Delivery Options),
+    // no longer hard-coded. Auto-selects the first option once loaded so the
+    // form always has a valid default, matching the old hard-coded behavior.
+    const { options: deliveryOptions } = useDeliveryOptions();
+    const [selectedDeliveryId, setSelectedDeliveryId] = useState<number | null>(null);
+    useEffect(() => {
+        if (deliveryOptions.length > 0 && selectedDeliveryId === null) {
+            setSelectedDeliveryId(deliveryOptions[0].id);
+        }
+    }, [deliveryOptions, selectedDeliveryId]);
+    const selectedDeliveryOption = deliveryOptions.find((o) => o.id === selectedDeliveryId);
+    const deliveryCharge = selectedDeliveryOption?.price ?? 0;
 
     // Order submission state
     const [submitting, setSubmitting] = useState(false);
-    const [orderSuccess, setOrderSuccess] = useState(false);
     const [orderError, setOrderError] = useState("");
 
-    // Geolocation (best-effort fraud/delivery signal — same as govaly-clone's CheckoutSection)
-    const [location, setLocation] = useState<{ lat: number | null; lon: number | null }>({ lat: null, lon: null });
-    const [locationStatus, setLocationStatus] = useState<"idle" | "detecting" | "found" | "denied">("idle");
-    useEffect(() => {
-        if ("geolocation" in navigator) {
-            setLocationStatus("detecting");
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-                    setLocationStatus("found");
-                },
-                () => setLocationStatus("denied")
-            );
-        }
-    }, []);
+    useLeadCapture({
+        phone: phone.trim(),
+        name: name.trim() || null,
+        address: address.trim() || null,
+        product_id: product?.id ?? null,
+        variant_id: selectedVariantId,
+        quantity,
+    });
 
     const subtotal = effectivePrice * quantity;
     const total = subtotal + deliveryCharge;
-
-    // division_name/district_name/city_name are derived from the delivery-area radio
-    // below (no separate location dropdowns, same as govaly-clone's CheckoutSection).
-    const derivedLocation = {
-        division: deliveryCharge === 60 ? "Dhaka" : "Outside Dhaka",
-        district: deliveryCharge === 60 ? "Dhaka City" : "Outside District",
-        city: deliveryCharge === 60 ? "Dhaka" : "Outside City",
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -104,8 +110,8 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
         // Flat, single-item payload matching OrderController::store's validation rules on the
         // backend exactly: location *names* (not ids), `delivery_fee` (not `delivery_charge`),
         // no `items[]` wrapper — the backend only ever reads one product per call.
-        // division_name/district_name/city_name are derived from the delivery-area radio,
-        // same as govaly-clone's CheckoutSection (no separate location dropdowns).
+        // division_name/district_name/city_name are all set to the selected Delivery
+        // Option's own label — there's no separate location selector.
         const payload: OrderPayload = {
             name: name.trim(),
             phone: phone.trim(),
@@ -114,38 +120,25 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
             variant_id: selectedVariantId ?? null,
             quantity,
             delivery_fee: deliveryCharge,
-            division_name: derivedLocation.division,
-            district_name: derivedLocation.district,
-            city_name: derivedLocation.city,
-            latitude: location.lat,
-            longitude: location.lon,
+            division_name: selectedDeliveryOption?.label ?? null,
+            district_name: selectedDeliveryOption?.label ?? null,
+            city_name: selectedDeliveryOption?.label ?? null,
         };
         try {
             const res = await fetch(`${API_BASE}/orders/checkout`, {
                 method: "POST",
-                headers: { ...HEADERS, "Content-Type": "application/json" },
+                headers: { ...HEADERS, "Content-Type": "application/json", "X-Cart-Session": getCartSessionId() },
                 body: JSON.stringify(payload),
             });
             if (!res.ok) throw new Error("Order failed");
-            setOrderSuccess(true);
+            const data = (await res.json().catch(() => ({}))) as OrderResponse;
+            const orderNumber = data.order_number ?? data.data?.order_number ?? `ORD-${Date.now()}`;
+            router.push(`/order-success/${orderNumber}`);
         } catch {
             setOrderError("অর্ডার সম্পন্ন হয়নি। আবার চেষ্টা করুন।");
-        } finally {
             setSubmitting(false);
         }
     };
-
-    if (orderSuccess) {
-        return (
-            <section className="py-20 bg-[#fdfbf7] px-4 text-center" id="checkout">
-                <div className="max-w-md mx-auto">
-                    <CheckCircle2 size={64} className="text-emerald-600 mx-auto mb-6" />
-                    <h2 className="text-3xl font-bold text-gray-900 mb-3">অর্ডার সফল হয়েছে!</h2>
-                    <p className="text-gray-500 text-lg">আমাদের প্রতিনিধি শীঘ্রই আপনার সাথে যোগাযোগ করবেন।</p>
-                </div>
-            </section>
-        );
-    }
 
     return (
         <section className="py-12 bg-[#fdfbf7] min-h-screen px-4 scroll-smooth" id="checkout">
@@ -179,25 +172,6 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
-                                    {locationStatus === "detecting" && (
-                                        <div className="flex items-center gap-2 text-xs font-medium text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5">
-                                            <Loader2 size={14} className="animate-spin shrink-0" />
-                                            লোকেশন শনাক্ত করা হচ্ছে...
-                                        </div>
-                                    )}
-                                    {locationStatus === "found" && location.lat !== null && location.lon !== null && (
-                                        <div className="flex flex-col gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2.5">
-                                            <div className="flex items-center gap-2">
-                                                <MapPin size={14} className="shrink-0" />
-                                                লোকেশন শনাক্ত করা হয়েছে ({location.lat.toFixed(4)}, {location.lon.toFixed(4)})
-                                            </div>
-                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-emerald-600 font-semibold pl-[22px]">
-                                                <span>বিভাগ: {derivedLocation.division}</span>
-                                                <span>জেলা: {derivedLocation.district}</span>
-                                                <span>শহর: {derivedLocation.city}</span>
-                                            </div>
-                                        </div>
-                                    )}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 ml-1">আপনার নাম *</label>
@@ -239,14 +213,11 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                             <Truck size={20} className="text-emerald-600" /> ডেলিভারি এরিয়া
                                         </p>
                                         <div className="grid grid-cols-1 gap-3">
-                                            {[
-                                                { label: "ঢাকা সিটির ভেতরে", price: 60 },
-                                                { label: "ঢাকার বাইরে", price: 120 },
-                                            ].map((opt) => (
+                                            {deliveryOptions.map((opt) => (
                                                 <label
-                                                    key={opt.price}
+                                                    key={opt.id}
                                                     className={`flex items-center justify-between p-5 border-2 rounded-2xl cursor-pointer transition-all ${
-                                                        deliveryCharge === opt.price
+                                                        selectedDeliveryId === opt.id
                                                             ? "border-emerald-600 bg-emerald-50 ring-4 ring-emerald-50/50"
                                                             : "border-gray-50 bg-gray-50/50 hover:border-emerald-100"
                                                     }`}
@@ -254,14 +225,14 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                                     <div className="flex items-center gap-4">
                                                         <div
                                                             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                                                                deliveryCharge === opt.price
+                                                                selectedDeliveryId === opt.id
                                                                     ? "border-emerald-600 bg-emerald-600"
                                                                     : "border-gray-300 bg-white"
                                                             }`}
                                                         >
-                                                            {deliveryCharge === opt.price && <div className="w-2 h-2 bg-white rounded-full" />}
+                                                            {selectedDeliveryId === opt.id && <div className="w-2 h-2 bg-white rounded-full" />}
                                                         </div>
-                                                        <input type="radio" name="delivery" className="hidden" onChange={() => setDeliveryCharge(opt.price)} />
+                                                        <input type="radio" name="delivery" className="hidden" onChange={() => setSelectedDeliveryId(opt.id)} />
                                                         <span className="font-bold text-gray-700">{opt.label}</span>
                                                     </div>
                                                     <span className="font-black text-emerald-800">৳{opt.price}</span>

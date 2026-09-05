@@ -8,6 +8,11 @@ export interface DeliveryInfo {
     address: string;
     note: string;
     deliveryCharge: number;
+    // The selected Delivery Option's own label (e.g. "Inside Dhaka City") —
+    // used by payment/page.tsx to fill division_name/district_name/city_name
+    // instead of guessing a location from the price, now that delivery
+    // pricing is admin-managed and no longer a fixed 60/100/130 tier set.
+    deliveryLabel: string;
 }
 
 interface CheckoutState extends DeliveryInfo {
@@ -25,6 +30,7 @@ const DEFAULTS: Omit<CheckoutState, "setDelivery" | "setPaymentMethod" | "hydrat
     address: "",
     note: "",
     deliveryCharge: 0,
+    deliveryLabel: "",
     paymentMethod: "cod",
 };
 
@@ -57,6 +63,7 @@ export const useCheckoutStore = create<CheckoutState>()((set, get) => ({
                     address: s.address,
                     note: s.note,
                     deliveryCharge: s.deliveryCharge,
+                    deliveryLabel: s.deliveryLabel,
                     paymentMethod: s.paymentMethod,
                 })
             );

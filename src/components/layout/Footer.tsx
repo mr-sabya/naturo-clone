@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Phone, Mail, MapPin, Facebook, Instagram, Youtube } from "lucide-react";
+import { Phone, Mail, MapPin, Facebook, Instagram, Youtube, MessageCircle } from "lucide-react";
 
 const footerLinks = [
     { name: "About Us", slug: "/about-us" },
@@ -21,9 +21,38 @@ const customerService = [
 interface FooterProps {
     logoUrl?: string;
     siteName?: string;
+    footerDescription?: string;
+    footerPhone?: string;
+    footerEmail?: string;
+    footerAddress?: string;
+    whatsappNumber?: string;
+    socialFacebookUrl?: string;
+    socialInstagramUrl?: string;
+    socialYoutubeUrl?: string;
+    copyrightText?: string;
 }
 
-export default function Footer({ logoUrl, siteName = "Naturo" }: FooterProps) {
+export default function Footer({
+    logoUrl,
+    siteName = "Naturo",
+    footerDescription = "Bringing you the purest gifts from nature, processed traditionally to keep all nutrients intact for your wellness.",
+    footerPhone = "09639812525",
+    footerEmail = "hello@naturo.com",
+    footerAddress = "Level-5, Noor Tower, 110 Bir Uttam CR Dutta Rd, Dhaka",
+    whatsappNumber,
+    socialFacebookUrl,
+    socialInstagramUrl,
+    socialYoutubeUrl,
+    copyrightText = "Crafting Health with Nature.",
+}: FooterProps) {
+    // Only real, admin-configured links render — no dead "#" placeholders.
+    const socialLinks = [
+        socialFacebookUrl && { Icon: Facebook, href: socialFacebookUrl, label: "Facebook" },
+        socialInstagramUrl && { Icon: Instagram, href: socialInstagramUrl, label: "Instagram" },
+        socialYoutubeUrl && { Icon: Youtube, href: socialYoutubeUrl, label: "YouTube" },
+        whatsappNumber && { Icon: MessageCircle, href: `https://wa.me/${whatsappNumber}`, label: "WhatsApp" },
+    ].filter(Boolean) as { Icon: typeof Facebook; href: string; label: string }[];
+
     return (
         <footer className="relative bg-[#0a1a12] text-white pt-20 overflow-hidden">
 
@@ -46,15 +75,24 @@ export default function Footer({ logoUrl, siteName = "Naturo" }: FooterProps) {
                             </div>
                         </Link>
                         <p className="text-white/60 leading-relaxed text-lg max-w-md">
-                            Bringing you the purest gifts from nature, processed traditionally to keep all nutrients intact for your wellness.
+                            {footerDescription}
                         </p>
-                        <div className="flex gap-4">
-                            {[Facebook, Instagram, Youtube].map((Icon, idx) => (
-                                <a key={idx} href="#" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-[#84b544] hover:text-white transition-all duration-300">
-                                    <Icon size={20} />
-                                </a>
-                            ))}
-                        </div>
+                        {socialLinks.length > 0 && (
+                            <div className="flex gap-4">
+                                {socialLinks.map(({ Icon, href, label }) => (
+                                    <a
+                                        key={label}
+                                        href={href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label={label}
+                                        className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-[#84b544] hover:text-white transition-all duration-300"
+                                    >
+                                        <Icon size={20} />
+                                    </a>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Links */}
@@ -88,20 +126,26 @@ export default function Footer({ logoUrl, siteName = "Naturo" }: FooterProps) {
                         <div className="col-span-2 lg:col-span-1 space-y-6">
                             <h4 className="text-naturoOrange font-bold uppercase tracking-widest text-xs">Connect</h4>
                             <div className="space-y-4">
-                                <a href="tel:09639812525" className="flex items-center gap-3 text-white/50 hover:text-white transition-colors">
-                                    <Phone size={16} className="text-naturoOrange" />
-                                    <span className="text-sm font-bold">09639812525</span>
-                                </a>
-                                <a href="mailto:hello@naturo.com" className="flex items-center gap-3 text-white/50 hover:text-white transition-colors">
-                                    <Mail size={16} className="text-naturoOrange" />
-                                    <span className="text-sm">hello@naturo.com</span>
-                                </a>
-                                <div className="flex items-start gap-3 text-white/50">
-                                    <MapPin size={16} className="text-naturoOrange shrink-0" />
-                                    <span className="text-sm leading-relaxed">
-                                        Level-5, Noor Tower, 110 Bir Uttam CR Dutta Rd, Dhaka
-                                    </span>
-                                </div>
+                                {footerPhone && (
+                                    <a href={`tel:${footerPhone}`} className="flex items-center gap-3 text-white/50 hover:text-white transition-colors">
+                                        <Phone size={16} className="text-naturoOrange" />
+                                        <span className="text-sm font-bold">{footerPhone}</span>
+                                    </a>
+                                )}
+                                {footerEmail && (
+                                    <a href={`mailto:${footerEmail}`} className="flex items-center gap-3 text-white/50 hover:text-white transition-colors">
+                                        <Mail size={16} className="text-naturoOrange" />
+                                        <span className="text-sm">{footerEmail}</span>
+                                    </a>
+                                )}
+                                {footerAddress && (
+                                    <div className="flex items-start gap-3 text-white/50">
+                                        <MapPin size={16} className="text-naturoOrange shrink-0" />
+                                        <span className="text-sm leading-relaxed">
+                                            {footerAddress}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -112,7 +156,7 @@ export default function Footer({ logoUrl, siteName = "Naturo" }: FooterProps) {
             <div className="border-t border-white/5 bg-black/20">
                 <div className="container mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-xs text-white/30 font-medium text-center md:text-left">
-                        <p>© {new Date().getFullYear()} <span className="text-white/60">Prakritiz</span> — Crafting Health with Nature.</p>
+                        <p>© {new Date().getFullYear()} <span className="text-white/60">{siteName}</span> — {copyrightText}</p>
 
                     </div>
 

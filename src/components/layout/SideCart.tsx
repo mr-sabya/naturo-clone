@@ -138,7 +138,7 @@ export default function SideCart({ isOpen, onClose }: SideCartProps) {
                                         {upsellProducts.slice(0, 4).map((p) => (
                                             <Link
                                                 key={p.id}
-                                                href={`/product/${p.slug}`}
+                                                href={p.has_active_landing_page ? `/${p.slug}` : `/product/${p.slug}`}
                                                 onClick={onClose}
                                                 className="min-w-[180px] bg-white border border-gray-100 rounded-lg p-3 hover:border-naturoGreen transition-colors"
                                             >

@@ -15,6 +15,7 @@ interface Product {
     image: string;
     slug: string;
     category?: string;
+    hasActiveLandingPage?: boolean;
 }
 
 interface ProductCarouselProps {
@@ -115,6 +116,7 @@ export default function ProductCarousel({ title, products, viewAllLink }: Produc
                                         image={product.image}
                                         slug={product.slug}
                                         category={product.category}
+                                        hasActiveLandingPage={product.hasActiveLandingPage}
                                     />
                                 </div>
                             ))}

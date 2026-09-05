@@ -19,7 +19,19 @@ export default async function SiteLayout({
         <>
             <Header logoUrl={settings.logo_url} siteName={settings.site_name} />
             <main className="min-h-screen">{children}</main>
-            <Footer logoUrl={settings.logo_url} siteName={settings.site_name} />
+            <Footer
+                logoUrl={settings.logo_url}
+                siteName={settings.site_name}
+                footerDescription={settings.footer_description}
+                footerPhone={settings.footer_phone}
+                footerEmail={settings.footer_email}
+                footerAddress={settings.footer_address}
+                whatsappNumber={settings.whatsapp_number}
+                socialFacebookUrl={settings.social_facebook_url}
+                socialInstagramUrl={settings.social_instagram_url}
+                socialYoutubeUrl={settings.social_youtube_url}
+                copyrightText={settings.copyright_text}
+            />
         </>
     );
 }

@@ -24,6 +24,20 @@ export interface Product {
     benefits?: ProductBenefits | null;
     reviews_gallery?: ReviewImage[];
     video_reviews?: VideoReview[];
+    // Ordered, admin-configured block list from the landing page builder —
+    // additive alongside the fixed keys above. See LandingSection below.
+    sections?: LandingSection[];
+    // Whether the frontend should render the site Header/Footer around this
+    // landing page (admin-configurable per funnel) — defaults to true.
+    show_header_footer?: boolean;
+    // Whether to render the "Related Products" carousel at the bottom —
+    // also admin-configurable per funnel, defaults to true.
+    show_related_products?: boolean;
+    meta?: { title?: string | null; description?: string | null };
+    // Whether a landing page is actively serving this product's own root
+    // URL right now — the [slug] route reads this to decide whether to
+    // render the funnel or redirect to the catalog page at /product/{slug}.
+    has_active_landing_page?: boolean;
     // legacy / fallback field names (may not exist in API)
     price?: RawPrice;
     original_price?: RawPrice;
@@ -36,6 +50,17 @@ export interface Product {
     label?: string;
     variants?: Variant[];
     video_url?: string;
+    brand?: { name: string; slug: string } | null;
+    // Grouped by SpecificationKey.group (e.g. "General", "Formulation").
+    specifications?: Record<string, { key: string; value: string }[]>;
+    // Real Review-model data (rating/comment) — distinct from
+    // `reviews_gallery` (customer review screenshots, a landing-page block).
+    reviews?: {
+        average: number;
+        total: number;
+        stars: Record<string, number>;
+        list: { id: number; name: string; rating: number; comment: string | null; created_at: string | null }[];
+    };
 }
 
 export interface ProductImage {
@@ -190,6 +215,109 @@ export interface CartItem {
     variant_id?: number;
     variant_name?: string;
 }
+
+export interface DeliveryOption {
+    id: number;
+    label: string;
+    sublabel?: string | null;
+    price: number;
+}
+
+// --- Landing page builder blocks (ProductLandingResource `sections`) ---
+
+export interface HeroSection {
+    type: "hero";
+    hero: ProductHeroData;
+}
+
+export interface FaqsSection {
+    type: "faqs";
+    faqs: FAQ[];
+}
+
+export interface BenefitsSection {
+    type: "benefits";
+    benefits: ProductBenefits | null;
+}
+
+export interface ReviewImagesSection {
+    type: "review_images";
+    reviews_gallery: ReviewImage[];
+}
+
+export interface ReviewVideosSection {
+    type: "review_videos";
+    video_reviews: VideoReview[];
+}
+
+export interface HeadingSection {
+    type: "heading";
+    text: string;
+    subtitle?: string;
+    size?: "h1" | "h2" | "h3" | string;
+    alignment?: "left" | "center" | "right" | string;
+}
+
+export interface RichTextSection {
+    type: "rich_text";
+    html: string;
+}
+
+export interface ImageSection {
+    type: "image";
+    image_url: string | null;
+    alt?: string;
+    link_url?: string;
+}
+
+export interface ButtonSection {
+    type: "button";
+    text: string;
+    url: string;
+    style?: "primary" | "secondary" | string;
+    alignment?: "left" | "center" | "right" | string;
+}
+
+export interface GalleryImage {
+    image_url: string;
+    alt?: string;
+    link_url?: string;
+}
+
+export interface GallerySection {
+    type: "gallery";
+    images: GalleryImage[];
+}
+
+export interface BundleItem {
+    product_id: number;
+    name: string | null;
+    slug: string | null;
+    image: string | null;
+    variant_id: number | null;
+    variant_name?: string | null;
+    price: number;
+    offer_price: number | null;
+}
+
+export interface BundleSection {
+    type: "bundle";
+    title: string;
+    items: BundleItem[];
+}
+
+export type LandingSection =
+    | HeroSection
+    | FaqsSection
+    | BenefitsSection
+    | ReviewImagesSection
+    | ReviewVideosSection
+    | HeadingSection
+    | RichTextSection
+    | ImageSection
+    | GallerySection
+    | ButtonSection
+    | BundleSection;
 
 export interface SpinWheelSegment {
     id: number;

@@ -19,6 +19,7 @@ interface NormalizedProduct {
     category: string;
     image: string;
     slug: string;
+    hasActiveLandingPage?: boolean;
 }
 
 function normalize(p: Product): NormalizedProduct {
@@ -32,6 +33,7 @@ function normalize(p: Product): NormalizedProduct {
         category: p.category_name ?? p.category ?? "Other",
         image: p.main_image || p.image || "",
         slug: p.slug,
+        hasActiveLandingPage: p.has_active_landing_page ?? false,
     };
 }
 
@@ -205,6 +207,7 @@ export default function ShopClient({ initialProducts, initialLastPage, initialCa
                                 image={product.image}
                                 slug={product.slug}
                                 category={product.category}
+                                hasActiveLandingPage={product.hasActiveLandingPage}
                             />
                         ))}
                     </div>

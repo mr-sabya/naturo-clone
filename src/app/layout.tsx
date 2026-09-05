@@ -7,6 +7,7 @@ import { GoogleTagManagerScript, GoogleTagManagerNoScript } from "../components/
 import RouteChangeTracker from "../components/shared/RouteChangeTracker";
 import { getSettings, buildThemeCss } from "@/lib/settings";
 import { getPixelSettings } from "@/lib/pixels";
+import { getSeoSettings } from "@/lib/seo";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -25,10 +26,29 @@ const hindSiliguri = Hind_Siliguri({
 
 export async function generateMetadata(): Promise<Metadata> {
     const settings = await getSettings();
+    const seo = await getSeoSettings();
+
+    const siteName = settings.site_name || "NaturoBD Clone";
+    const tagline = settings.site_tagline || "Organic & Natural Products";
+    const title = seo.metaTitle || `${siteName} | ${tagline}`;
+    const description = settings.meta_description || "Buy 100% pure and organic products in Bangladesh.";
+
     return {
-        title: settings.site_name ? `${settings.site_name} | Organic & Natural Products` : "NaturoBD Clone | Organic & Natural Products",
-        description: "Buy 100% pure and organic products in Bangladesh.",
+        title,
+        description,
+        keywords: seo.metaKeywords ? seo.metaKeywords.split(",").map((k) => k.trim()).filter(Boolean) : undefined,
         icons: settings.favicon_url ? { icon: settings.favicon_url } : undefined,
+        robots: seo.robots || undefined,
+        alternates: seo.canonicalUrl ? { canonical: seo.canonicalUrl } : undefined,
+        verification: seo.googleSiteVerification ? { google: seo.googleSiteVerification } : undefined,
+        openGraph: {
+            title: seo.ogTitle || title,
+            description: seo.ogDescription || description,
+            siteName,
+            type: "website",
+            url: seo.canonicalUrl || undefined,
+            images: seo.ogImage ? [{ url: seo.ogImage }] : undefined,
+        },
     };
 }
 

@@ -16,6 +16,10 @@ interface ProductProps {
     isOutOfStock?: boolean;
     label?: string;
     category?: string;
+    // Whether this product has an active ad-funnel landing page at its own
+    // root /{slug} URL — links go straight there instead of /product/{slug}
+    // when set, avoiding an extra redirect hop.
+    hasActiveLandingPage?: boolean;
 }
 
 const PLACEHOLDER = "/images/products/product_1.webp";
@@ -30,11 +34,13 @@ const ProductCard = ({
     isOutOfStock,
     label,
     category = "Organic",
+    hasActiveLandingPage,
 }: ProductProps) => {
     const addItem = useCartStore((s) => s.addItem);
     const safeImage = image || PLACEHOLDER;
     const numPrice = Number(price) || 0;
     const numOriginal = originalPrice ? Number(originalPrice) || 0 : 0;
+    const productUrl = hasActiveLandingPage ? `/${slug}` : `/product/${slug}`;
 
     const discount =
         numOriginal > numPrice && numOriginal > 0
@@ -58,7 +64,7 @@ const ProductCard = ({
 
             {/* IMAGE SECTION */}
             <div className="relative aspect-[4/4] overflow-hidden bg-[#fbfbf9] border-b border-gray-100/50">
-                <Link href={`/product/${slug}`} className="block h-full w-full">
+                <Link href={productUrl} className="block h-full w-full">
                     <Image
                         src={safeImage}
                         alt={name}
@@ -97,7 +103,7 @@ const ProductCard = ({
                             <Heart size={18} />
                         </button>
                         <Link
-                            href={`/product/${slug}`}
+                            href={productUrl}
                             className="p-2.5 bg-white hover:bg-naturoGreen hover:text-white text-gray-600 rounded-full shadow-lg transition-colors duration-300"
                         >
                             <Eye size={18} />
@@ -112,7 +118,7 @@ const ProductCard = ({
                     {category}
                 </span>
 
-                <Link href={`/product/${slug}`} className="mb-2">
+                <Link href={productUrl} className="mb-2">
                     <h3 className="text-gray-800 font-semibold text-sm md:text-base leading-tight hover:text-naturoGreen transition-colors line-clamp-2">
                         {name}
                     </h3>

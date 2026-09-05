@@ -9,14 +9,10 @@ import { useCartStore } from "@/store/cartStore";
 import { useCheckoutStore } from "@/store/checkoutStore";
 import Stepper from "@/components/shared/Stepper";
 import { trackPurchase } from "@/lib/gtm";
+import { getCartSessionId } from "@/lib/session";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
-const HEADERS = {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    "X-Tenant-Id": TENANT_ID,
-};
 
 interface OrderResponse {
     order_number?: string;
@@ -38,6 +34,7 @@ export default function PaymentPage() {
     const phone = useCheckoutStore((s) => s.phone);
     const address = useCheckoutStore((s) => s.address);
     const deliveryCharge = useCheckoutStore((s) => s.deliveryCharge);
+    const deliveryLabel = useCheckoutStore((s) => s.deliveryLabel);
     const paymentMethod = useCheckoutStore((s) => s.paymentMethod);
 
     const [submitting, setSubmitting] = useState(false);
@@ -55,19 +52,6 @@ export default function PaymentPage() {
         }
     }, [hydrated, name, router]);
 
-    // Same three tiers as checkout/page.tsx's DELIVERY_OPTIONS, resolved to
-    // descriptive location-name strings — the backend's real order validator
-    // (OrderController::store) wants division_name/district_name/city_name
-    // strings, not ids (there's no division/district/city selector anymore,
-    // see PRODUCT_PAGE_PARITY.md §3.7/§3.8 — same pattern CheckoutSection.tsx
-    // already uses for the single-product landing-page checkout).
-    const derivedLocation =
-        deliveryCharge >= 130
-            ? { division: "Outside Dhaka", district: "Outside Dhaka District", city: "Outside Dhaka District" }
-            : deliveryCharge >= 100
-            ? { division: "Dhaka", district: "Outside Dhaka City", city: "Outside Dhaka City" }
-            : { division: "Dhaka", district: "Dhaka City", city: "Dhaka" };
-
     const handleConfirm = async () => {
         if (submitting || items.length === 0) return;
         setSubmitting(true);
@@ -80,7 +64,11 @@ export default function PaymentPage() {
             // OrderController::store's real validation rules exactly
             // (product_id/variant_id/quantity/delivery_fee/division_name/
             // district_name/city_name as top-level fields, not an `items[]`
-            // wrapper the backend never reads).
+            // wrapper the backend never reads). division/district/city are
+            // all set to the selected Delivery Option's own label — there's
+            // no real division/district/city selector, see
+            // PRODUCT_PAGE_PARITY.md §3.7/§3.8.
+            const cartSessionId = getCartSessionId();
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 const payload = {
@@ -91,14 +79,19 @@ export default function PaymentPage() {
                     variant_id: item.variant_id ?? null,
                     quantity: item.quantity,
                     delivery_fee: i === 0 ? deliveryCharge : 0,
-                    division_name: derivedLocation.division,
-                    district_name: derivedLocation.district,
-                    city_name: derivedLocation.city,
+                    division_name: deliveryLabel || null,
+                    district_name: deliveryLabel || null,
+                    city_name: deliveryLabel || null,
                 };
 
                 const res = await fetch(`${API_BASE}/orders/checkout`, {
                     method: "POST",
-                    headers: HEADERS,
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        "X-Tenant-Id": TENANT_ID,
+                        "X-Cart-Session": cartSessionId,
+                    },
                     body: JSON.stringify(payload),
                 });
 
