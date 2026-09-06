@@ -10,6 +10,7 @@ import { useCheckoutStore } from "@/store/checkoutStore";
 import Stepper from "@/components/shared/Stepper";
 import { trackBeginCheckout } from "@/lib/gtm";
 import { useDeliveryOptions } from "@/lib/deliveryOptions";
+import { validatePhone, validateEmail } from "@/lib/validation";
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -29,6 +30,7 @@ export default function CheckoutPage() {
 
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
+    const [email, setEmail] = useState("");
     const [address, setAddress] = useState("");
     const [note, setNote] = useState("");
 
@@ -44,8 +46,10 @@ export default function CheckoutPage() {
     const validate = () => {
         const errs: Record<string, string> = {};
         if (!name.trim()) errs.name = "নাম আবশ্যক";
-        if (!phone.trim() || !/^01[0-9]{9}$/.test(phone.trim()))
-            errs.phone = "সঠিক মোবাইল নাম্বার দিন (01XXXXXXXXX)";
+        const phoneError = validatePhone(phone);
+        if (phoneError) errs.phone = phoneError;
+        const emailError = validateEmail(email);
+        if (emailError) errs.email = emailError;
         if (!address.trim()) errs.address = "ঠিকানা আবশ্যক";
         if (!selectedDeliveryOption) errs.delivery = "ডেলিভারি এরিয়া সিলেক্ট করুন";
         setErrors(errs);
@@ -57,6 +61,7 @@ export default function CheckoutPage() {
         setDelivery({
             name: name.trim(),
             phone: phone.trim(),
+            email: email.trim(),
             address: address.trim(),
             note: note.trim(),
             deliveryCharge,
@@ -128,6 +133,18 @@ export default function CheckoutPage() {
                                     className="w-full px-4 py-3 bg-[#fdfbf7] border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm"
                                 />
                                 {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-emerald-900">ইমেইল (অপশনাল)</label>
+                                <input
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    type="email"
+                                    placeholder="you@example.com"
+                                    className="w-full px-4 py-3 bg-[#fdfbf7] border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm"
+                                />
+                                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                             </div>
 
                             <div className="space-y-1">

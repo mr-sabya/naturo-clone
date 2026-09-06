@@ -12,6 +12,7 @@ import { trackViewItem } from "@/lib/gtm";
 import { getCartSessionId } from "@/lib/session";
 import { useLeadCapture } from "@/lib/orderTracking";
 import { useDeliveryOptions } from "@/lib/deliveryOptions";
+import { validatePhone, validateEmail } from "@/lib/validation";
 import type { Product, OrderPayload } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -68,6 +69,7 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
     const [quantity, setQuantity] = useState(1);
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
+    const [email, setEmail] = useState("");
     const [address, setAddress] = useState("");
 
     // Delivery options — admin-managed (Admin > Website > Delivery Options),
@@ -86,6 +88,7 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
     // Order submission state
     const [submitting, setSubmitting] = useState(false);
     const [orderError, setOrderError] = useState("");
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     useLeadCapture({
         phone: phone.trim(),
@@ -101,10 +104,20 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim() || !phone.trim() || !address.trim()) {
-            setOrderError("নাম, মোবাইল নম্বর এবং ঠিকানা পূরণ করুন।");
+
+        const errs: Record<string, string> = {};
+        if (!name.trim()) errs.name = "নাম আবশ্যক";
+        const phoneError = validatePhone(phone);
+        if (phoneError) errs.phone = phoneError;
+        const emailError = validateEmail(email);
+        if (emailError) errs.email = emailError;
+        if (!address.trim()) errs.address = "ঠিকানা আবশ্যক";
+        setErrors(errs);
+        if (Object.keys(errs).length > 0) {
+            setOrderError("");
             return;
         }
+
         setSubmitting(true);
         setOrderError("");
         // Flat, single-item payload matching OrderController::store's validation rules on the
@@ -115,6 +128,7 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
         const payload: OrderPayload = {
             name: name.trim(),
             phone: phone.trim(),
+            ...(email.trim() ? { email: email.trim() } : {}),
             address: address.trim(),
             product_id: Number(product?.id ?? 0),
             variant_id: selectedVariantId ?? null,
@@ -183,6 +197,7 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                                 required
                                                 className="w-full p-4 bg-gray-50 border-gray-100 border rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                                             />
+                                            {errors.name && <p className="text-red-500 text-xs ml-1">{errors.name}</p>}
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 ml-1">মোবাইল নাম্বার *</label>
@@ -194,6 +209,18 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                                 required
                                                 className="w-full p-4 bg-gray-50 border-gray-100 border rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                                             />
+                                            {errors.phone && <p className="text-red-500 text-xs ml-1">{errors.phone}</p>}
+                                        </div>
+                                        <div className="md:col-span-2 space-y-2">
+                                            <label className="text-sm font-bold text-gray-700 ml-1">ইমেইল (অপশনাল)</label>
+                                            <input
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                placeholder="you@example.com"
+                                                className="w-full p-4 bg-gray-50 border-gray-100 border rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                                            />
+                                            {errors.email && <p className="text-red-500 text-xs ml-1">{errors.email}</p>}
                                         </div>
                                         <div className="md:col-span-2 space-y-2">
                                             <label className="text-sm font-bold text-gray-700 ml-1">সম্পূর্ণ ঠিকানা *</label>
@@ -204,6 +231,7 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                                 required
                                                 className="w-full p-4 bg-gray-50 border-gray-100 border rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white min-h-[100px] transition-all"
                                             />
+                                            {errors.address && <p className="text-red-500 text-xs ml-1">{errors.address}</p>}
                                         </div>
                                     </div>
 

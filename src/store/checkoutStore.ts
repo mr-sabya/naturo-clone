@@ -5,6 +5,7 @@ const STORAGE_KEY = "naturo-checkout";
 export interface DeliveryInfo {
     name: string;
     phone: string;
+    email: string;
     address: string;
     note: string;
     deliveryCharge: number;
@@ -27,6 +28,7 @@ interface CheckoutState extends DeliveryInfo {
 const DEFAULTS: Omit<CheckoutState, "setDelivery" | "setPaymentMethod" | "hydrate" | "saveToSession" | "clear"> = {
     name: "",
     phone: "",
+    email: "",
     address: "",
     note: "",
     deliveryCharge: 0,
@@ -60,6 +62,7 @@ export const useCheckoutStore = create<CheckoutState>()((set, get) => ({
                 JSON.stringify({
                     name: s.name,
                     phone: s.phone,
+                    email: s.email,
                     address: s.address,
                     note: s.note,
                     deliveryCharge: s.deliveryCharge,

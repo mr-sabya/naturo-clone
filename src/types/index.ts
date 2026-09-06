@@ -175,6 +175,7 @@ export interface Banner {
 export interface OrderPayload {
     name: string;
     phone: string;
+    email?: string;
     address: string;
     address_id?: number | null;
     user_id?: number | null;

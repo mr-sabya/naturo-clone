@@ -32,6 +32,7 @@ export default function PaymentPage() {
 
     const name = useCheckoutStore((s) => s.name);
     const phone = useCheckoutStore((s) => s.phone);
+    const email = useCheckoutStore((s) => s.email);
     const address = useCheckoutStore((s) => s.address);
     const deliveryCharge = useCheckoutStore((s) => s.deliveryCharge);
     const deliveryLabel = useCheckoutStore((s) => s.deliveryLabel);
@@ -74,6 +75,7 @@ export default function PaymentPage() {
                 const payload = {
                     name,
                     phone,
+                    ...(email ? { email } : {}),
                     address,
                     product_id: item.product_id,
                     variant_id: item.variant_id ?? null,
