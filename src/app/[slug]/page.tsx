@@ -15,7 +15,7 @@ import FaqSection from "@/components/landing/FaqSection";
 import LandingSections from "@/components/landing/LandingSections";
 import { getSettings } from "@/lib/settings";
 import { parsePrice, parseOriginalPrice } from "@/lib/api";
-import type { Product } from "@/types";
+import type { Product, BundleSection } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
@@ -340,6 +340,7 @@ async function ProductLandingPage({ slug, headerFooterProps }: { slug: string; h
 
     const showChrome = product.show_header_footer !== false;
     const scrollToCheckout = "#checkout";
+    const bundleSection = product.sections?.find((s): s is BundleSection => s.type === "bundle");
 
     return (
         <>
@@ -386,7 +387,7 @@ async function ProductLandingPage({ slug, headerFooterProps }: { slug: string; h
                 )}
 
                 {/* Checkout */}
-                <CheckoutSection product={product} />
+                <CheckoutSection product={product} bundleData={bundleSection} />
 
                 {product.show_related_products !== false && similarProducts.length > 0 && (
                     <ProductCarousel

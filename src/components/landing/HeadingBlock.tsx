@@ -19,7 +19,7 @@ export default function HeadingBlock({ text, subtitle, size, alignment }: Headin
     const alignClass = ALIGN_CLASSES[alignment ?? "center"] ?? ALIGN_CLASSES.center;
 
     return (
-        <section className="bg-white py-10 px-4">
+        <section className="bg-white py-8 px-4">
             <div className={`max-w-4xl mx-auto ${alignClass}`}>
                 <h2 className={`${sizeClass} font-bold text-gray-900 font-serif`}>{text}</h2>
                 {subtitle && <p className="mt-3 text-gray-500 text-base md:text-lg">{subtitle}</p>}

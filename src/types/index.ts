@@ -177,6 +177,7 @@ export interface OrderPayload {
     phone: string;
     email?: string;
     address: string;
+    bundle_items?: { product_id: number; variant_id?: number | null; quantity?: number }[];
     address_id?: number | null;
     user_id?: number | null;
     product_id: number;

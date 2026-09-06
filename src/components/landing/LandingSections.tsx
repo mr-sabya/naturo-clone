@@ -8,7 +8,6 @@ import RichTextBlock from "./RichTextBlock";
 import ImageBlock from "./ImageBlock";
 import GalleryBlock from "./GalleryBlock";
 import ButtonBlock from "./ButtonBlock";
-import BundleBlock from "./BundleBlock";
 import type { LandingSection } from "@/types";
 
 interface LandingSectionsProps {
@@ -51,7 +50,8 @@ export default function LandingSections({ sections, scrollToCheckoutHref }: Land
                     case "button":
                         return <ButtonBlock key={key} {...section} />;
                     case "bundle":
-                        return <BundleBlock key={key} {...section} />;
+                        // Rendered as "Complete the Set" at the bottom of CheckoutSection instead.
+                        return null;
                     default:
                         return null;
                 }

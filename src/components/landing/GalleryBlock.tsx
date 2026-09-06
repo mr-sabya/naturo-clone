@@ -6,7 +6,7 @@ export default function GalleryBlock({ images }: GallerySection) {
     if (!images || images.length === 0) return null;
 
     return (
-        <section className="bg-white py-8 px-4">
+        <section className="bg-white py-6 px-4">
             <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-3">
                 {images.map((img, index) => {
                     const tile = (

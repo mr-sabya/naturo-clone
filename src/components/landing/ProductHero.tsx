@@ -18,7 +18,7 @@ export default function ProductHero({ data, scrollToCheckoutHref }: ProductHeroP
     };
 
     return (
-        <section className="relative bg-[#f4f4f4] py-12 px-4 overflow-hidden border-b border-gray-200">
+        <section className="relative bg-[#f4f4f4] py-8 px-4 overflow-hidden border-b border-gray-200">
             <div className="container mx-auto px-4 max-w-6xl">
                 <div className="relative z-10 max-w-5xl mx-auto text-center">
                     {/* Highlight Title */}
@@ -32,11 +32,11 @@ export default function ProductHero({ data, scrollToCheckoutHref }: ProductHeroP
                     </h1>
 
                     {/* Description */}
-                    <p className="text-red-600 font-bold text-sm md:text-lg mb-8 max-w-3xl mx-auto leading-relaxed">
+                    <p className="text-red-600 font-bold text-sm md:text-lg mb-6 max-w-3xl mx-auto leading-relaxed">
                         {data.description}
                     </p>
 
-                    <div className="mt-10">
+                    <div className="mt-6">
                         <div className="flex justify-center">
                             <Link href={scrollToCheckoutHref}>
                                 <OrderButton />
@@ -45,7 +45,7 @@ export default function ProductHero({ data, scrollToCheckoutHref }: ProductHeroP
 
                         {/* Video Section */}
                         {data.video_url && (
-                            <div className="relative aspect-[16/9] mx-auto rounded-3xl overflow-hidden shadow-2xl border-8 border-white group mt-10">
+                            <div className="relative aspect-[16/9] mx-auto rounded-3xl overflow-hidden shadow-2xl border-8 border-white group mt-6">
                                 <iframe
                                     className="w-full h-full"
                                     src={getEmbedUrl(data.video_url)}

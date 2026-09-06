@@ -12,14 +12,14 @@ export default function FaqSection({ faqs, scrollToCheckoutHref }: FaqSectionPro
     if (!faqs || faqs.length === 0) return null;
 
     return (
-        <section className="bg-[#00703c] py-20 px-4">
+        <section className="bg-[#00703c] py-14 px-4">
             <div className="max-w-4xl mx-auto">
-                <h2 className="text-white text-xl md:text-3xl font-bold text-center mb-12 leading-relaxed font-serif">
+                <h2 className="text-white text-xl md:text-3xl font-bold text-center mb-8 leading-relaxed font-serif">
                     আমরা প্রতিনিয়ত যে প্রশ্নগুলো পেয়ে থাকি
                 </h2>
                 <FaqAccordion faqs={faqs} />
             </div>
-            <div className="flex justify-center mt-10">
+            <div className="flex justify-center mt-6">
                 <Link href={scrollToCheckoutHref}>
                     <OrderButton />
                 </Link>

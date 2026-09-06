@@ -18,9 +18,9 @@ export default function VideoReviewSection({ videos }: VideoReviewSectionProps) 
     if (!videos || videos.length === 0) return null;
 
     return (
-        <section className="py-16 md:py-24 bg-white px-4">
+        <section className="py-10 md:py-16 bg-white px-4">
             <div className="max-w-6xl mx-auto">
-                <div className="text-center mb-12 md:mb-16">
+                <div className="text-center mb-8 md:mb-10">
                     <h2 className="text-2xl md:text-4xl font-bold text-[#006400] leading-tight font-serif">
                         আমাদের অনেক কাস্টমার ভিডিও রিভিউ রয়েছে তার ভিতরে কিছু দেওয়া হল
                     </h2>
@@ -70,7 +70,7 @@ export default function VideoReviewSection({ videos }: VideoReviewSectionProps) 
                     })}
                 </div>
 
-                <div className="mt-16 text-center">
+                <div className="mt-10 text-center">
                     <p className="text-gray-400 text-sm font-medium uppercase tracking-[0.2em]">
                         Trusted by 7,000+ Happy Customers
                     </p>

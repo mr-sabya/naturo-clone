@@ -12,7 +12,7 @@ export default function ImageBlock({ image_url, alt, link_url }: ImageSection) {
     );
 
     return (
-        <section className="bg-white py-8 px-4">
+        <section className="bg-white py-6 px-4">
             <div className="max-w-4xl mx-auto">
                 {link_url ? <Link href={link_url}>{img}</Link> : img}
             </div>

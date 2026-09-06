@@ -22,9 +22,9 @@ export default function CustomerReviewSlider({ reviews }: CustomerReviewSliderPr
     if (!reviews || reviews.length === 0) return null;
 
     return (
-        <section className="py-20 bg-gray-50 overflow-hidden">
+        <section className="py-14 bg-gray-50 overflow-hidden">
             <div className="container mx-auto px-4">
-                <div className="text-center mb-12">
+                <div className="text-center mb-8">
                     <h2 className="text-3xl md:text-4xl font-bold text-gray-800 font-serif mb-4">
                         আমাদের অনেক কাস্টমার রিভিউ রয়েছে তার ভিতরে কিছু দেওয়া হল
                     </h2>

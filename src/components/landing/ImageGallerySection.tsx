@@ -47,7 +47,7 @@ export default function ImageGallerySection({ images }: ImageGalleryProps) {
     if (!images || images.length === 0) return null;
 
     return (
-        <section className="py-16 bg-white px-4">
+        <section className="py-10 bg-white px-4">
             <div className="max-w-6xl mx-auto relative group">
 
                 {/* Navigation Header */}

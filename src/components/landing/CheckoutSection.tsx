@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-    Minus, Plus, ShieldCheck,
+    Minus, Plus, Check, Sparkles, ShieldCheck,
     PhoneCall, CheckCircle2, Truck, Info
 } from "lucide-react";
 import { parsePrice, parseOriginalPrice } from "@/lib/api";
@@ -13,7 +13,9 @@ import { getCartSessionId } from "@/lib/session";
 import { useLeadCapture } from "@/lib/orderTracking";
 import { useDeliveryOptions } from "@/lib/deliveryOptions";
 import { validatePhone, validateEmail } from "@/lib/validation";
-import type { Product, OrderPayload } from "@/types";
+import type { Product, OrderPayload, BundleSection, BundleItem } from "@/types";
+
+const bundleItemKey = (item: BundleItem) => `${item.product_id}-${item.variant_id ?? 0}`;
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!;
@@ -26,9 +28,10 @@ interface OrderResponse {
 
 interface CheckoutSectionProps {
     product?: Product | null;
+    bundleData?: BundleSection | null;
 }
 
-export default function CheckoutSection({ product }: CheckoutSectionProps) {
+export default function CheckoutSection({ product, bundleData }: CheckoutSectionProps) {
     const router = useRouter();
     const images: string[] = useMemo(() => {
         const FALLBACK_IMAGES = ["/images/products/product_1.webp", "/images/products/product_2.webp", "/images/products/product_3.webp"];
@@ -90,6 +93,20 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
     const [orderError, setOrderError] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    // "Complete the Set" — cross-sell items bought together with the main
+    // product in this same order, not the persistent multi-page cart.
+    const [addedBundleKeys, setAddedBundleKeys] = useState<Set<string>>(new Set());
+    const toggleBundleItem = (item: BundleItem) => {
+        const key = bundleItemKey(item);
+        setAddedBundleKeys((prev) => {
+            const next = new Set(prev);
+            next.has(key) ? next.delete(key) : next.add(key);
+            return next;
+        });
+    };
+    const selectedBundleItems = (bundleData?.items ?? []).filter((item) => addedBundleKeys.has(bundleItemKey(item)));
+    const bundleSubtotal = selectedBundleItems.reduce((sum, item) => sum + (item.offer_price ?? item.price), 0);
+
     useLeadCapture({
         phone: phone.trim(),
         name: name.trim() || null,
@@ -99,7 +116,7 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
         quantity,
     });
 
-    const subtotal = effectivePrice * quantity;
+    const subtotal = effectivePrice * quantity + bundleSubtotal;
     const total = subtotal + deliveryCharge;
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -137,6 +154,9 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
             division_name: selectedDeliveryOption?.label ?? null,
             district_name: selectedDeliveryOption?.label ?? null,
             city_name: selectedDeliveryOption?.label ?? null,
+            ...(selectedBundleItems.length > 0
+                ? { bundle_items: selectedBundleItems.map((item) => ({ product_id: item.product_id, variant_id: item.variant_id ?? null, quantity: 1 })) }
+                : {}),
         };
         try {
             const res = await fetch(`${API_BASE}/orders/checkout`, {
@@ -155,10 +175,10 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
     };
 
     return (
-        <section className="py-12 bg-[#fdfbf7] min-h-screen px-4 scroll-smooth" id="checkout">
+        <section className="py-8 bg-[#fdfbf7] min-h-screen px-4 scroll-smooth" id="checkout">
             <div className="max-w-6xl mx-auto">
 
-                <div className="text-center mb-10">
+                <div className="text-center mb-6">
                     <h2 className="text-3xl md:text-5xl font-bold text-gray-900 font-serif mb-4">
                         অর্ডার সম্পন্ন করুন
                     </h2>
@@ -177,8 +197,8 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                     {/* Left: Order Form */}
                     <div className="lg:col-span-7">
                         <div className="bg-white rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.04)] border border-emerald-50 overflow-hidden">
-                            <div className="p-8 md:p-12">
-                                <div className="flex items-center gap-3 mb-8">
+                            <div className="p-6 md:p-8">
+                                <div className="flex items-center gap-3 mb-6">
                                     <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700">
                                         <Info size={20} />
                                     </div>
@@ -270,12 +290,18 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                                     </div>
 
                                     {/* Financial Summary */}
-                                    <div className="mt-10 p-8 rounded-[2.5rem] bg-emerald-900 text-white relative overflow-hidden">
+                                    <div className="mt-6 p-6 rounded-[2.5rem] bg-emerald-900 text-white relative overflow-hidden">
                                         <div className="relative z-10 space-y-3">
                                             <div className="flex justify-between items-center opacity-80 text-sm">
                                                 <span>সাবটোটাল ({quantity} আইটেম)</span>
-                                                <span>৳{subtotal}</span>
+                                                <span>৳{(effectivePrice * quantity).toFixed(0)}</span>
                                             </div>
+                                            {selectedBundleItems.length > 0 && (
+                                                <div className="flex justify-between items-center opacity-80 text-sm">
+                                                    <span>সেট আইটেম ({selectedBundleItems.length})</span>
+                                                    <span>৳{bundleSubtotal.toFixed(0)}</span>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between items-center opacity-80 text-sm">
                                                 <span>ডেলিভারি চার্জ</span>
                                                 <span>৳{deliveryCharge}</span>
@@ -423,6 +449,60 @@ export default function CheckoutSection({ product }: CheckoutSectionProps) {
                         </div>
                     </div>
                 </div>
+
+                {/* Complete the Set — cross-sell items bundled into this same order */}
+                {bundleData && bundleData.items.length > 0 && (
+                    <div className="mt-8 bg-emerald-50 rounded-[2.5rem] p-6 md:p-8">
+                        <h3 className="flex items-center justify-center gap-2 text-xl md:text-2xl font-bold text-emerald-900 font-serif text-center mb-6">
+                            <Sparkles size={20} className="text-emerald-600" />
+                            {bundleData.title}
+                        </h3>
+                        <div className="space-y-3 max-w-3xl mx-auto">
+                            {bundleData.items.map((item) => {
+                                const key = bundleItemKey(item);
+                                const isAdded = addedBundleKeys.has(key);
+                                const price = item.offer_price ?? item.price;
+                                const hasOffer = item.offer_price !== null && item.offer_price < item.price;
+
+                                return (
+                                    <div key={key} className="flex items-center gap-4 bg-white rounded-2xl p-3 md:p-4 shadow-sm">
+                                        <div className="relative w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl overflow-hidden bg-gray-50">
+                                            {item.image && (
+                                                <Image src={item.image} alt={item.name ?? "Product"} fill className="object-cover" />
+                                            )}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-gray-800 truncate">{item.name}</p>
+                                            {item.variant_name && (
+                                                <p className="text-xs text-gray-400">{item.variant_name}</p>
+                                            )}
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="font-bold text-emerald-700">৳{price.toFixed(0)}</span>
+                                                {hasOffer && (
+                                                    <span className="text-sm text-gray-400 line-through">৳{item.price.toFixed(0)}</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleBundleItem(item)}
+                                            className={`shrink-0 flex items-center gap-1.5 px-5 py-2.5 rounded-full font-bold text-sm transition-all ${
+                                                isAdded
+                                                    ? "bg-emerald-100 text-emerald-700"
+                                                    : "bg-emerald-600 hover:bg-emerald-700 text-white hover:scale-105"
+                                            }`}
+                                        >
+                                            {isAdded ? <Check size={16} /> : <Plus size={16} />}
+                                            {isAdded ? "Added" : "Add"}
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
         </section>
     );

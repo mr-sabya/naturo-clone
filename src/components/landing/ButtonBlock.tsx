@@ -19,7 +19,7 @@ export default function ButtonBlock({ text, url, style, alignment }: ButtonSecti
         : "bg-white border-2 border-emerald-700 text-emerald-700 hover:bg-emerald-50";
 
     return (
-        <section className="bg-white py-8 px-4">
+        <section className="bg-white py-6 px-4">
             <div className={`max-w-4xl mx-auto flex ${alignClass}`}>
                 {isAnchor ? (
                     <a href={url} className={`inline-flex items-center px-10 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 shadow-lg ${buttonClass}`}>
