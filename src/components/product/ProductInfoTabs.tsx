@@ -44,7 +44,7 @@ export default function ProductInfoTabs({ product }: ProductInfoTabsProps) {
                 {active === "description" && (
                     product.long_description ? (
                         <div
-                            className="prose prose-emerald max-w-none text-gray-700"
+                            className="prose prose-emerald max-w-none text-gray-700 ql-editor"
                             dangerouslySetInnerHTML={{ __html: product.long_description }}
                         />
                     ) : (
